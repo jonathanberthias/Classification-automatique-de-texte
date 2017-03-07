@@ -1,0 +1,1 @@
+"""Distance entre textes."""
