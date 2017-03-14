@@ -4,9 +4,6 @@ import os
 from collections import Counter
 
 
-# from traitement import PATH_TO_FILMS
-
-
 class Compteur:
     """Class pour compter les occurences de chaque mot d'un texte."""
 

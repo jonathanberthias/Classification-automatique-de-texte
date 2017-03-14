@@ -71,14 +71,7 @@ class TraiteurCommentaires:
         "VERB"
     ]
 
-    # lemmatiseur_func = nltk.stem.WordNetLemmatizer().lemmatize
     lemmatiseur_func = nltk.stem.SnowballStemmer(language='english').stem
-    """
-    a = nltk.stem.PorterStemmer().stem
-    b = nltk.stem.RegexpStemmer("ing|able").stem
-    c = nltk.stem.SnowballStemmer(language='english').stem
-    d = nltk.stem.LancasterStemmer().stem
-    """
 
     @staticmethod
     def traiter_commentaire(comment):
