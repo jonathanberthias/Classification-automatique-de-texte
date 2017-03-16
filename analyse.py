@@ -78,7 +78,8 @@ class StockeurFrequences:
         mots = RecuperateurTexte.get_mots_film(film_id, self.dossier)
         compte = Compteur.compter(mots)
         self.occurences[film_id] = compte
-        self.total += compte
+        # self.total += compte
+        self.total.update(compte)
 
     def get_compte_film(self, film_id):
         """Renvoie l'objet Counter associé à un film."""

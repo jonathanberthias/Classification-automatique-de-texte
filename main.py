@@ -21,18 +21,22 @@ PATH_TO_INDEX = os.path.join(PATH_TO_RESOURCES, "title_index")
 PATH_TO_COMMENTS = os.path.join(PATH_TO_RESOURCES, "comments")
 PATH_TO_FILMS = os.path.join(PATH_TO_RESOURCES, "films")
 
-NOMBRE_COMMENTAIRES = 1000
+NOMBRE_COMMENTAIRES = 5000
+OVERWRITE = False
 
 
 def main():
     """Fonction principale."""
-    traiteur = traitement.Traitement(
-        PATH_TO_INDEX, PATH_TO_COMMENTS, PATH_TO_FILMS)
-    debut = time.time()
-    traiteur.traiter(NOMBRE_COMMENTAIRES)
-    duree = time.time() - debut
-    print("%d commentaires traités en %.3fs." % (NUMBER_COMMENTS, duree))
-
+    if OVERWRITE:
+        traiteur = traitement.Traitement(
+            PATH_TO_INDEX, PATH_TO_COMMENTS, PATH_TO_FILMS)
+        debut = time.time()
+        traiteur.traiter(NOMBRE_COMMENTAIRES, OVERWRITE)
+        duree = time.time() - debut
+        print("%d commentaires traités en %.3fs." %
+              (NOMBRE_COMMENTAIRES, duree))
+    else:
+        print("Traitement sauté.")
     print("Comptage des mots.")
     debut = time.time()
     analyseur = analyse.StockeurFrequences(PATH_TO_FILMS)

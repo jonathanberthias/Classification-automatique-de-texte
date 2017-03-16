@@ -6,6 +6,7 @@ fichier du film qui lui correspond.
 
 import os
 import re
+import shutil
 import sys
 
 import nltk
@@ -125,15 +126,13 @@ class TraiteurCommentaires:
 class EcriveurFichiersFilms:
     """Crée les fichiers des films."""
 
-    def __init__(self, path_to_folder, overwrite=True):
+    def __init__(self, path_to_folder):
         """Crée le dossier pour stocker les films."""
         self.chemin = path_to_folder
-        if overwrite:
-            if os.path.exists(self.chemin):
-                # On importe que si besoin
-                import shutil
-                shutil.rmtree(self.chemin)
-            os.makedirs(self.chemin)
+        if os.path.exists(self.chemin):
+            # On importe que si besoin
+            shutil.rmtree(self.chemin)
+        os.makedirs(self.chemin)
 
     def ecrire_commentaire(self, comment, film_id):
         """Ecrit le commentaire pour le film donné."""
@@ -174,7 +173,8 @@ class Traitement:
         get_film_id = AssociateurCommentairesFilms(
             self.path_to_index).get_film
         print("Répertoire créé.")
-        writer = EcriveurFichiersFilms(self.path_to_films).ecrire_commentaire
+        writer = EcriveurFichiersFilms(
+            self.path_to_films).ecrire_commentaire
         traiter = TraiteurCommentaires.traiter_commentaire
         num_com = 0
         print("Ecriture des fichiers pour les films.")
