@@ -138,11 +138,12 @@ class EcriveurFichiersFilms:
         """Ecrit le commentaire pour le film donné."""
         fichier = os.path.join(self.chemin, film_id)
         if os.path.exists(fichier):
-            with open(fichier, 'a') as film:
+            # 'utf8' pour éviter les problèmes d'encodage/décodage
+            with open(fichier, 'a', encoding='utf8') as film:
                 film.write("\n")
                 film.write(comment)
         else:
-            with open(fichier, 'w') as film:
+            with open(fichier, 'w', encoding='utf8') as film:
                 film.write(comment)
 
 
@@ -185,7 +186,7 @@ class Traitement:
             if nb_com < 25000 and num_com > nb_com:
                 break
             # sys.stdout.write("\r%.1f%%" % (100 * num_com / nb_com))
-            with open(os.path.join(self.path_to_comments, com)) as comment:
+            with open(os.path.join(self.path_to_comments, com), encoding='utf8') as comment:
                 commentaire = comment.read()
                 commentaire = traiter(commentaire)
                 film_id = get_film_id(com_id)

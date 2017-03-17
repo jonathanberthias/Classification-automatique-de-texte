@@ -35,7 +35,7 @@ class RecuperateurTexte:
         :param dossier: dossier contenant les fichiers à lire.
         """
         try:
-            with open(os.path.join(dossier, id_film), 'r') as com:
+            with open(os.path.join(dossier, id_film), 'r', encoding='utf8') as com:
                 return com.read()
         except FileNotFoundError:
             raise ValueError("%s inexistant dans le dossier %s." %
