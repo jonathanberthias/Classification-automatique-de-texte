@@ -72,7 +72,49 @@ class TraiteurCommentaires:
         "VERB"
     ]
 
-    lemmatiseur_func = nltk.stem.SnowballStemmer(language='english').stem
+    # frozenset pour accès rapide rapide à une liste immuable
+    # liste des mots inutiles les pus fréquents
+    mots_trop_frequents = frozenset([
+        'the', 'and', 'a', 'of', 'to', 'is', 'it', 'in', 'i', 'this', 'that',
+        's', 'was', 'as', 'movie', 'for', 'with', 'but', 'film', 't', 'you',
+        'on', 'not', 'he', 'are', 'his', 'have', 'be', 'one', 'all', 'at',
+        'they', 'by', 'an', 'who', 'so', 'from', 'like', 'there', 'her', 'or',
+        'just', 'about', 'out', 'if', 'has', 'what', 'some', 'good', 'can',
+        'more', 'she', 'when', 'very', 'up', 'no', 'time', 'even', 'would',
+        'my', 'which', 'only', 'really', 'see', 'their', 'had', 'we', 'were',
+        'me', 'than', 'much', 'get', 'people', 'been', 'do', 'will', 'other',
+        'also', 'into', 'first', 'because', 'don', 'how', 'him', 'most', 'made',
+        'its', 'then', 'way', 'make', 'them', 'could', 'too', 'movies', 'any',
+        'after', 'characters', 'character', 'watch', 'two', 'films', 'seen',
+        'many', 'life', 'being', 'little', 'never', 'where', 'over', 'did',
+        'show', 'know', 'off', 'ever', 'man', 'does', 'here', 'your', 'end',
+        'these', 'say', 'scene', 'why', 'while', 'go', 'scenes', 've', 'such',
+        'm', 'something', 'should', 'back', 'through', 'real', 'those',
+        'now', 'watching', 'actors', 'doesn', 'thing', 're', 'years',
+        'director', 'work', 'didn', 'another', 'before', 'new', 'nothing',
+        'actually', 'makes', 'look', 'find', 'going', 'few', 'lot', 'part',
+        'every', 'world', 'us', 'quite', 'down', 'want', 'things', 'seems',
+        'around', 'enough', 'got', 'however', 'fact', 'take', 'big',
+        'thought', 'both', 'between', 'may', 'give', 'own', 'right',
+        'without', 'must', 'always', 'times', 'point', 'gets', 'come',
+        'isn', 'saw', 'almost', 'least', 'done', 'whole', 'bit', 'guy',
+        'd', 'far', 'since', 'making', 'feel', 'anything', 'last', 'might',
+        'll', 'sure', 'probably', 'kind', 'am', 'away', 'yet', 'day',
+        'anyone', 'each', 'found', 'having', 'although', 'especially', 'our',
+        'believe', 'course', 'screen', 'comes', 'looking', 'set', 'goes',
+        'looks', 'place', 'put', 'year', 'let', 'maybe', 'someone',
+        'true', 'once', 'sense', 'reason', 'everything', 'wasn', 'job',
+        'main', 'together', 'watched', 'play', 'everyone', 'plays', 'later',
+        'said', 'takes', 'instead', 'seem', 'himself', 'during', 'seeing',
+        'half', 'else', 'read', 'simply', 'completely', 'short', 'men',
+        'help', 'wrong', 'used', 'either', 'line', 'given',
+        'performances', 'women', 'enjoy', 'need', 'rest', 'use', 'low',
+        'production'
+    ])
+
+    lemmatiseur_func = nltk.stem.LancasterStemmer().stem
+
+    pattern = re.compile(r'[\W_]+')
 
     @staticmethod
     def traiter_commentaire(comment):
@@ -103,23 +145,24 @@ class TraiteurCommentaires:
     def _enlever_ponctuation(comment):
         """Nettoie la ponctuation."""
         # Ne garde que les lettres et les chiffres
-        pattern = re.compile(r'[\W_]+')
-        clean_comment = pattern.sub(' ', comment.lower())
-
+        clean_comment = TraiteurCommentaires.pattern.sub(' ', comment.lower())
+        """
         tokenized = word_tokenize(clean_comment)
         tokens = nltk.pos_tag(tokenized)
         to_keep = (x[0] for x in tokens if x[1]
                    in TraiteurCommentaires.a_garder and x[0] not in
                    TraiteurCommentaires.mots_a_enlever)
-        lemmes = (TraiteurCommentaires.lemmatiseur_func(x) for x in to_keep)
-        return " ".join(lemmes)
+        lemmes = (TraiteurCommentaires._lemmatiser(x) for x in to_keep)
+        ret = " ".join(lemmes)
+        """
+        to_keep = (x for x in clean_comment.split() if
+                   TraiteurCommentaires.lemmatiseur_func(x) not in
+                   TraiteurCommentaires.mots_trop_frequents)
+        return " ".join(to_keep)
 
     @staticmethod
     def _lemmatiser(mot):
-        """Lemmatise un mot.
-
-        Pour l'instant, on utilise juste le module nltk.
-        """
+        """Lemmatise un mot."""
         return TraiteurCommentaires.lemmatiseur_func(mot)
 
 
@@ -186,7 +229,8 @@ class Traitement:
             if nb_com < 25000 and num_com > nb_com:
                 break
             # sys.stdout.write("\r%.1f%%" % (100 * num_com / nb_com))
-            with open(os.path.join(self.path_to_comments, com), encoding='utf8') as comment:
+            full_path = os.path.join(self.path_to_comments, com)
+            with open(full_path, encoding='utf8') as comment:
                 commentaire = comment.read()
                 commentaire = traiter(commentaire)
                 film_id = get_film_id(com_id)
