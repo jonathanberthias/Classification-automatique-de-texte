@@ -1,5 +1,6 @@
 """Analyse du texte."""
 
+import math
 import os
 from collections import Counter
 
@@ -16,12 +17,6 @@ class Compteur:
                  pour le comptage d'éléments d'un itérable.
         """
         return Counter(mots)
-        """
-        compte = {}
-        for mot in mots:
-            compte[mot] = compte.get(mot, 0) + 1
-        return compte
-        """
 
 
 class RecuperateurTexte:
@@ -35,7 +30,7 @@ class RecuperateurTexte:
         :param dossier: dossier contenant les fichiers à lire.
         """
         try:
-            with open(os.path.join(dossier, id_film), 'r', encoding='utf8') as com:
+            with open(os.path.join(dossier, id_film), encoding='utf8') as com:
                 return com.read()
         except FileNotFoundError:
             raise ValueError("%s inexistant dans le dossier %s." %
@@ -92,3 +87,41 @@ class StockeurFrequences:
     def compte_total(self):
         """Renvoie les occurences dans la totalité des textes du dossier."""
         return self.total
+
+
+class Calculateur_indices:
+    """Calcule l'indice TF-IDF des mots."""
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def indice_tf(mot, occurences_texte):
+        """Renvoie l'indice TF d'un mot dans un texte.
+
+        Forme simple: fréquence brute.
+
+        :param mot: mot dont on cherche la fréquence.
+        :param occurences_texte: 'Counter' des occurences de chaque mot du 
+                                 texte.
+        """
+        try:
+            return occurences_texte[mot]
+        except KeyError as key_err:
+            print("%s pas apparu." % mot)
+            raise key_err
+
+    @staticmethod
+    def indice_idf(mot, occurences_corpus):
+        """Calcule l'indice IDF d'un mot dans un corpus.
+
+        log_10 du nombre de textes divisé par le nombre de textes où le mot
+        apparait.
+
+        :param mot: mot dont on cherche l'indice TDF.
+        :param occurences_corpus: Dictionnaire de tous les 'Counter' des textes
+                                  du corpus.
+        """
+        nb_textes = len(occurences_corpus)
+        apparu = sum([mot in occ for occ in occurences_corpus.values()])
+        return math.log10(nb_textes / apparu)
