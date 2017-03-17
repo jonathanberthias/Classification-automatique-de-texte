@@ -184,7 +184,7 @@ class Traitement:
             # Indicateur de progression
             if nb_com < 25000 and num_com > nb_com:
                 break
-            sys.stdout.write("\r%.1f%%" % (100 * num_com / nb_com))
+            # sys.stdout.write("\r%.1f%%" % (100 * num_com / nb_com))
             with open(os.path.join(self.path_to_comments, com)) as comment:
                 commentaire = comment.read()
                 commentaire = traiter(commentaire)

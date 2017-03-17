@@ -31,7 +31,7 @@ def main():
         traiteur = traitement.Traitement(
             PATH_TO_INDEX, PATH_TO_COMMENTS, PATH_TO_FILMS)
         debut = time.time()
-        traiteur.traiter(NOMBRE_COMMENTAIRES, OVERWRITE)
+        traiteur.traiter(NOMBRE_COMMENTAIRES)
         duree = time.time() - debut
         print("%d commentaires traités en %.3fs." %
               (NOMBRE_COMMENTAIRES, duree))
