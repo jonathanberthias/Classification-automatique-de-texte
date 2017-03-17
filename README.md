@@ -9,5 +9,6 @@ Avec l'algorithme k-means et la fréquence d'utilisation des mots, nous allons r
 
 #### Contributeurs
 Jonathan BERTHIAS
+Jade HENRY
 Ophélia MIRALLES
 Sarah OULKADI
