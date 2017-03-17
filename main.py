@@ -17,12 +17,12 @@ else:  # autre part
         title="Veuillez sélectionner votre dossier 'imdb'.")
 # Pour tests
 #   PATH_TO_RESOURCES = "../imdb_test"
-PATH_TO_INDEX = os.path.join(PATH_TO_RESOURCES, "title_index")
-PATH_TO_COMMENTS = os.path.join(PATH_TO_RESOURCES, "comments")
-PATH_TO_FILMS = os.path.join(PATH_TO_RESOURCES, "films")
+PATH_TO_INDEX = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "title_index"))
+PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
+PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
 
-NOMBRE_COMMENTAIRES = 5000
-OVERWRITE = False
+NOMBRE_COMMENTAIRES = 1000
+OVERWRITE = True
 
 
 def main():
