@@ -40,8 +40,6 @@ def main():
     print("Comptage des mots.")
     debut = time.time()
     analyseur = analyse.StockeurFrequences(PATH_TO_FILMS)
-    for film in os.listdir(PATH_TO_FILMS):
-        analyseur.ajouter_film(film)
     stock = analyseur.compte_total()
     duree = time.time() - debut
     print("Opération effectuée en %.3fs." % duree)

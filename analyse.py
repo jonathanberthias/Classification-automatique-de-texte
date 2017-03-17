@@ -67,8 +67,10 @@ class StockeurFrequences:
         self.dossier = dossier
         self.occurences = {}
         self.total = Counter()
+        for film in os.listdir(self.dossier):
+            self._ajouter_film(film)
 
-    def ajouter_film(self, film_id):
+    def _ajouter_film(self, film_id):
         """Ajoute un film et son compte de mots dans la base.
 
         Erreur si le film a déjà été compté.
@@ -78,7 +80,7 @@ class StockeurFrequences:
         mots = RecuperateurTexte.get_mots_film(film_id, self.dossier)
         compte = Compteur.compter(mots)
         self.occurences[film_id] = compte
-        # self.total += compte
+        # update ajoute le compte au total (sans créer de nouveau Counter)
         self.total.update(compte)
 
     def get_compte_film(self, film_id):
@@ -89,8 +91,4 @@ class StockeurFrequences:
 
     def compte_total(self):
         """Renvoie les occurences dans la totalité des textes du dossier."""
-        return self.total
-        for compte in self.occurences.values():
-            # Opération '+' sur les Counter ajoute les occurences
-            self.total += compte
         return self.total
