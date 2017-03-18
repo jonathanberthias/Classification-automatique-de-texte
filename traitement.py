@@ -44,72 +44,73 @@ class AssociateurCommentairesFilms:
 class TraiteurCommentaires:
     """Lemmatise et enlève la ponctuation des commentaires."""
 
-    # Mots les plus fréquents
-    mots_a_enlever = [
-        "i",
-        "movie",
-        "film",
-        "have",
-        "are",
-        "be",
-        "get",
-        "other",
-        "do",
-        "go",
-        "say",
-        "make"
-    ]
-
-    a_garder = [
-        "VB",
-        "VBP",
-        "NN",
-        "JJ",
-        "NNP",
-        "ADJ",
-        "NUM",
-        "NOUN",
-        "VERB"
-    ]
+    a_garder = ["VB", "VBP", "NN", "JJ", "NNP", "ADJ", "NUM", "NOUN", "VERB"]
 
     # frozenset pour accès rapide rapide à une liste immuable
     # liste des mots inutiles les pus fréquents
     mots_trop_frequents = frozenset([
-        'the', 'and', 'a', 'of', 'to', 'is', 'it', 'in', 'i', 'this', 'that',
-        's', 'was', 'as', 'movie', 'for', 'with', 'but', 'film', 't', 'you',
-        'on', 'not', 'he', 'are', 'his', 'have', 'be', 'one', 'all', 'at',
-        'they', 'by', 'an', 'who', 'so', 'from', 'like', 'there', 'her', 'or',
-        'just', 'about', 'out', 'if', 'has', 'what', 'some', 'good', 'can',
-        'more', 'she', 'when', 'very', 'up', 'no', 'time', 'even', 'would',
-        'my', 'which', 'only', 'really', 'see', 'their', 'had', 'we', 'were',
-        'me', 'than', 'much', 'get', 'people', 'been', 'do', 'will', 'other',
-        'also', 'into', 'first', 'because', 'don', 'how', 'him', 'most', 'made',
-        'its', 'then', 'way', 'make', 'them', 'could', 'too', 'movies', 'any',
-        'after', 'characters', 'character', 'watch', 'two', 'films', 'seen',
-        'many', 'life', 'being', 'little', 'never', 'where', 'over', 'did',
-        'show', 'know', 'off', 'ever', 'man', 'does', 'here', 'your', 'end',
-        'these', 'say', 'scene', 'why', 'while', 'go', 'scenes', 've', 'such',
-        'm', 'something', 'should', 'back', 'through', 'real', 'those',
-        'now', 'watching', 'actors', 'doesn', 'thing', 're', 'years',
-        'director', 'work', 'didn', 'another', 'before', 'new', 'nothing',
-        'actually', 'makes', 'look', 'find', 'going', 'few', 'lot', 'part',
-        'every', 'world', 'us', 'quite', 'down', 'want', 'things', 'seems',
-        'around', 'enough', 'got', 'however', 'fact', 'take', 'big',
-        'thought', 'both', 'between', 'may', 'give', 'own', 'right',
-        'without', 'must', 'always', 'times', 'point', 'gets', 'come',
-        'isn', 'saw', 'almost', 'least', 'done', 'whole', 'bit', 'guy',
-        'd', 'far', 'since', 'making', 'feel', 'anything', 'last', 'might',
-        'll', 'sure', 'probably', 'kind', 'am', 'away', 'yet', 'day',
-        'anyone', 'each', 'found', 'having', 'although', 'especially', 'our',
-        'believe', 'course', 'screen', 'comes', 'looking', 'set', 'goes',
-        'looks', 'place', 'put', 'year', 'let', 'maybe', 'someone',
-        'true', 'once', 'sense', 'reason', 'everything', 'wasn', 'job',
-        'main', 'together', 'watched', 'play', 'everyone', 'plays', 'later',
-        'said', 'takes', 'instead', 'seem', 'himself', 'during', 'seeing',
-        'half', 'else', 'read', 'simply', 'completely', 'short', 'men',
-        'help', 'wrong', 'used', 'either', 'line', 'given',
-        'performances', 'women', 'enjoy', 'need', 'rest', 'use', 'low',
-        'production'
+        'thi', 'movy', 'hav', 'ar', 'al', 'act', 'lik', 'ev', 'ther', 'tim',
+        'mak', 'som', 'mor', 'charact', 'story', 'wer', 'wel', 'com', 'oth',
+        'scen', 'bad', 'lov', 'wil', 'gre', 'peopl', 'direct', 'mad', 'becaus',
+        'think', 'tak', 'giv', 'aft', 'plot', 'ov', 'lif', 'nev', 'littl',
+        'best', 'wher', 'bet', 'doe', 'stil', 'yo', 'fin', 'writ', 'perform',
+        'sery', 'thes', 'kil', 'whil', 'old', 'someth', 'rol', 'car',
+        'interest', 'tru', 'star', 'thos', 'wom', 'cast', 'though', 'liv',
+        'sam', 'funny', 'mus', 'anoth', 'bef', 'noth', 'try', '10', 'view',
+        'start', 'believ', 'young', 'produc', 'hum', 'girl', 'again', 'origin',
+        'long', 'turn', 'hor', 'lat', 'quit', 'lin', 'friend', 'minut',
+        'comedy', 'pretty', 'wond', 'hap', 'sur', 'high', 'effect', 'howev',
+        'hard', 'laugh', 'bas', 'fan', 'person', 'famy', 'ear', 'nee', 'tel',
+        'beauty', 'becom', 'alway', 'class', 'mom', 'kid', 'sint', 'whol',
+        'complet', 'mean', 'cre', 'plac', 'lead', 'script', 'expect', 'diff',
+        'shot', 'book', 'mat', 'anyth', 'nam', 'prob', 'begin', 'cal', 'tal',
+        '2', 'entertain', 'fun', 'run', 'sex', 'sens', 'tv', 'mov', 'art',
+        'hop', 'rath', 'worst', 'anyon', 'audy', 'bor', 'poor', 'episod', 'rat',
+        'war', 'spec', 'rel', 'op', 'appear', 'dialog', 'miss', 'keep',
+        'surpr', 'espec', 'cours', 'second', 'anim', 'fac', 'nat', 'wor',
+        'goe', 'perfect', 'vert', 'gen', 'money', 'mind', 'someon', 'problem',
+        'nic', 'dvd', 'mayb', 'tri', 'ont', 'hous', 'typ', 'everyth', 'night',
+        'aw', 'three', 'follow', 'boy', 'ful', 'recommend', 'suppos', 'ag',
+        'leav', 'hand', 'excel', 'wast', 'togeth', 'dur', 'hom', 'dram',
+        'obvy', 'sound', 'everyon', 'certain', 'john', 'fath', 'top', 'ad',
+        '1', 'ey', 'decid', 'cut', 'fight', 'less', 'fal', 'review', 'terr',
+        'hour', 'talk', 'ment', 'left', 'wif', 'black', 'understand', 'murd',
+        'dead', 'head', 'includ', 'styl', 'rememb', 'chang', 'entir', 'els',
+        'ide', 'pleas', 'sev', 'hist', 'stat', 'pow', 'clos', 'releas', 'pict',
+        'rom', 'piec', 'involv', 'feat', 'tot', 'budget', 'non', 'pres',
+        'poss', 'sav', 'attempt', 'hollywood', 'cinem', 'disappoint',
+        'stupid', 'song', 'dea', 'sad', 'portray', 'expery', '3', 'coupl',
+        'eith', 'video', 'definit', 'absolv', 'exceiv', 'abl', 'cop', 'cas',
+        'easy', 'success', 'consid', 'lack', 'word', 'particul', 'child',
+        'sci', 'amaz', 'fail', 'titl', 'until', 'camer', 'mess', 'along',
+        'form', 'dark', 'loc', 'smal', 'hat', 'clear', 'emot', 'jok', 'dant',
+        'adv', 'sort', 'viol', 'bring', 'next', 'cam', 'heart', 'light',
+        'broth', 'gam', 'won', 'perhap', 'slow', 'near', 'flick', 'develop',
+        'school', 'par', 'qual', 'pass', 'walk', 'moth', 'oft', 'vis', 'sequ',
+        'sil', 'doing', 'meet', 'hil', 'imagin', 'ye', 'actress', 'bril',
+        'sid', 'ex', 'horr', 'whit', 'unfortun', 'guess', 'el', 'itself',
+        'sit', 'lost', 'exampl', 'stop', 'hero', 'forc', 'son', 'numb',
+        'felt', 'impress', 'quest', 'childr', 'support', 'hit', 'ask',
+        'couldn', 'rent', 'extrem', 'pol', 'wors', 'voic', 'und', 'against',
+        'stand', 'evil', 'went', 'min', 'oh', 'somewh', 'mr', 'wait',
+        'overal', 'list', 'favorit', 'mystery', 'un', 'edit', 'past',
+        'already', '5', 'learn', 'spoil', '4', 'michael', 'marry', 'genr',
+        'despit', 'deal', 'throughout', 'win', 'town', 'del', 'driv',
+        'happy', 'dec', 'mem', 'teen', 'self', 'daught', 'mil', 'wish',
+        'twist', 'credit', 'cult', 'annoy', 'soon', 'sing', 'touch', 'b',
+        'city', 'today', 'sometim', 'simpl', 'behind', 'god', 'bil',
+        'deserv', 'tre', 'bar', 'stay', 'zomby', 'pac', 'chant', 'blood',
+        'novel', 'crit', 'plan', 'stuff', 'docu', 'comp', 'anyway', 'app',
+        'import', 'ord', 'fil', 'body', 'gav', 'myself', 'hel', 'incred',
+        'etc', 'level', 'fig', 'scor', 'er', 'exact', 'dream', 'maj', 'situ',
+        'speak', 'die', 'themselv', 'capt', 'los', 'return', 'pet', 'hold',
+        'room', 'shoot', 'ridic', 'group', 'lady', 'thank', 'tend',
+        'cinematograph', 'acc', 'jam', 'break', 'pain', 'cont', 'fem',
+        'heard', 'pick', 'rec', 'convint', 'robert', 'rock', 'husband',
+        'valu', 'polit', 'took', 'simil', 'cannot', 'strong', 'predict',
+        'fair', 'four', 'country', 'continu', 'known', 'hug', 'shock', 'im',
+        'gor', 'cent', 'mot', 'season', 'fam', 'alon', 'told', 'opin',
+        'wouldn', 'crap', 'hear', 'ten', 'result', 'caus'
     ])
 
     lemmatiseur_func = nltk.stem.LancasterStemmer().stem
@@ -146,7 +147,7 @@ class TraiteurCommentaires:
         """Nettoie la ponctuation."""
         # Ne garde que les lettres et les chiffres
         clean_comment = TraiteurCommentaires.pattern.sub(' ', comment.lower())
-        """
+        """ Classification grammaticale de chaque mot.
         tokenized = word_tokenize(clean_comment)
         tokens = nltk.pos_tag(tokenized)
         to_keep = (x[0] for x in tokens if x[1]
@@ -155,9 +156,11 @@ class TraiteurCommentaires:
         lemmes = (TraiteurCommentaires._lemmatiser(x) for x in to_keep)
         ret = " ".join(lemmes)
         """
-        to_keep = (x for x in clean_comment.split() if
-                   TraiteurCommentaires.lemmatiseur_func(x) not in
-                   TraiteurCommentaires.mots_trop_frequents)
+        # On lemmatise chaque mot et on garde que si il est pas trop fréquent.
+        to_keep = filter(lambda x: x not in
+                         TraiteurCommentaires.mots_trop_frequents, map(
+                             TraiteurCommentaires.lemmatiseur_func,
+                             clean_comment.split()))
         return " ".join(to_keep)
 
     @staticmethod
@@ -226,7 +229,7 @@ class Traitement:
             com_id = com[:com.find("_")]
             num_com += 1
             # Indicateur de progression
-            if nb_com < 25000 and num_com > nb_com:
+            if num_com > nb_com:
                 break
             # sys.stdout.write("\r%.1f%%" % (100 * num_com / nb_com))
             full_path = os.path.join(self.path_to_comments, com)
