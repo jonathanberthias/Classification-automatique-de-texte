@@ -148,17 +148,15 @@ class StockeurIndicesTfIdf:
         # Fréquences brutes.
         print("Calcul des occurences de chaque mot.")
         debut = time.time()
-        stockeur_frequences = StockeurFrequences(dossier)
+        stockeur_freq = StockeurFrequences(dossier)
         print("Comptage terminé en %.3fs." % (time.time() - debut))
         # Indices TF-IDF
         print("Calcul des indices TF-IDF.")
         debut = time.time()
         self.indices = {}
-        for film, occ_film in stockeur_frequences.occurences.items():
-            self.indices[film] = defaultdict(float)
-            for mot in occ_film:
-                self.indices[film][mot] = CalculateurIndices.indice_tf_idf(
-                    mot, occ_film, stockeur_frequences.occurences)
+        for film, occ_film in stockeur_freq.occurences.items():
+            self.indices[film] = {mot: CalculateurIndices.indice_tf_idf(
+                mot, occ_film, stockeur_freq.occurences) for mot in occ_film}
         print("Calcul des indices effectué en %.3fs." % (time.time() - debut))
 
     def get_indice(self, mot, film):
