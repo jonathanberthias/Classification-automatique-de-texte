@@ -89,20 +89,19 @@ class StockeurFrequences:
         return self.total
 
 
-class Calculateur_indices:
+class CalculateurIndices:
     """Calcule l'indice TF-IDF des mots."""
 
-    def __init__(self):
-        pass
+    indices_idf = {}
 
     @staticmethod
-    def indice_tf(mot, occurences_texte):
+    def _indice_tf(mot, occurences_texte):
         """Renvoie l'indice TF d'un mot dans un texte.
 
         Forme simple: fréquence brute.
 
         :param mot: mot dont on cherche la fréquence.
-        :param occurences_texte: 'Counter' des occurences de chaque mot du 
+        :param occurences_texte: 'Counter' des occurences de chaque mot du
                                  texte.
         """
         try:
@@ -112,16 +111,32 @@ class Calculateur_indices:
             raise key_err
 
     @staticmethod
-    def indice_idf(mot, occurences_corpus):
+    def _indice_idf(mot, occurences_corpus):
         """Calcule l'indice IDF d'un mot dans un corpus.
 
-        log_10 du nombre de textes divisé par le nombre de textes où le mot
+        log base 10 du nombre de textes divisé par le nombre de textes où le mot
         apparait.
 
         :param mot: mot dont on cherche l'indice TDF.
         :param occurences_corpus: Dictionnaire de tous les 'Counter' des textes
                                   du corpus.
         """
+        if mot in CalculateurIndices.indices_idf:
+            return CalculateurIndices.indices_idf[mot]
         nb_textes = len(occurences_corpus)
         apparu = sum([mot in occ for occ in occurences_corpus.values()])
-        return math.log10(nb_textes / apparu)
+        idf = math.log10(nb_textes / apparu)
+        CalculateurIndices.indices_idf[mot] = idf
+        return idf
+
+    @staticmethod
+    def indice_tf_idf(mot, occurences_texte, occurences_corpus):
+        """Indice TF-IDF d'un mot d'un texte par rapport au corpus.
+
+        :param mot: mot dont on cherche l'indice TF-IDF.
+        :param occurences_texte: 'Counter' des mots du texte contenant le mot.
+        :param occurences_corpus: 'Counter' des mots dans tout le corpus.
+        """
+        ind_tf = CalculateurIndices._indice_tf(mot, occurences_texte)
+        ind_idf = CalculateurIndices._indice_idf(mot, occurences_corpus)
+        return ind_tf * ind_idf
