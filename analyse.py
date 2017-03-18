@@ -2,7 +2,7 @@
 
 import math
 import os
-from collections import Counter
+from collections import Counter, defaultdict
 
 
 class Compteur:
@@ -70,9 +70,8 @@ class StockeurFrequences:
 
         Erreur si le film a déjà été compté.
         """
-        if film_id in self.occurences:
-            raise ValueError("Film %s a déjà été compté." % film_id)
         mots = RecuperateurTexte.get_mots_film(film_id, self.dossier)
+        # 'compte' est un 'Counter', une forme de dictionnaire.
         compte = Compteur.compter(mots)
         self.occurences[film_id] = compte
         # update ajoute le compte au total (sans créer de nouveau Counter)
@@ -140,3 +139,28 @@ class CalculateurIndices:
         ind_tf = CalculateurIndices._indice_tf(mot, occurences_texte)
         ind_idf = CalculateurIndices._indice_idf(mot, occurences_corpus)
         return ind_tf * ind_idf
+
+
+class StockeurIndicesTfIdf:
+    """Pour chaque film, enregistre l'indice TF-IDF de chaque mot."""
+
+    def __init__(self, dossier):
+        """Initialise le stockeur des indices TF-IDF."""
+        # Fréquences brutes.
+        stockeur_frequences = StockeurFrequences(dossier)
+        corpus = stockeur_frequences.compte_total
+        # Indices TF-IDF
+        self.indices = {}
+        for film, occ_film in stockeur_frequences.occurences:
+            self.indices[film] = defaultdict(float)
+            for mot in occ_film:
+                self.indices[film][mot] = CalculateurIndices.indice_tf_idf(
+                    mot, occ_film, corpus)
+
+    def get_indice(self, mot, film):
+        """Renvoie l'indice TF-IDF d'un mot pour un film donné."""
+        try:
+            return self.indices[film][mot]
+        except KeyError:
+            print("Mot %s pas dans le film %s" % (mot, film))
+            return 0.
