@@ -2,6 +2,7 @@
 
 import math
 import os
+import time
 from collections import Counter, defaultdict
 
 
@@ -59,23 +60,22 @@ class StockeurFrequences:
         collections.Counter de ses commentaires.
         :total: stocke le compte parmi tous les textes
         """
-        self.dossier = dossier
         self.occurences = {}
         self.total = Counter()
-        for film in os.listdir(self.dossier):
-            self._ajouter_film(film)
+        self._ajouter_films(dossier)
 
-    def _ajouter_film(self, film_id):
+    def _ajouter_films(self, dossier):
         """Ajoute un film et son compte de mots dans la base.
 
         Erreur si le film a déjà été compté.
         """
-        mots = RecuperateurTexte.get_mots_film(film_id, self.dossier)
-        # 'compte' est un 'Counter', une forme de dictionnaire.
-        compte = Compteur.compter(mots)
-        self.occurences[film_id] = compte
-        # update ajoute le compte au total (sans créer de nouveau Counter)
-        self.total.update(compte)
+        for film_id in os.listdir(dossier):
+            mots = RecuperateurTexte.get_mots_film(film_id, dossier)
+            # 'compte' est un 'Counter', une forme de dictionnaire.
+            compte = Compteur.compter(mots)
+            self.occurences[film_id] = compte
+            # update ajoute le compte au total (sans créer de nouveau Counter)
+            self.total.update(compte)
 
     def get_compte_film(self, film_id):
         """Renvoie l'objet Counter associé à un film."""
@@ -117,8 +117,7 @@ class CalculateurIndices:
         apparait.
 
         :param mot: mot dont on cherche l'indice TDF.
-        :param occurences_corpus: Dictionnaire de tous les 'Counter' des textes
-                                  du corpus.
+        :param occurences_corpus: 'Counter' de tous les textes du corpus.
         """
         if mot in CalculateurIndices.indices_idf:
             return CalculateurIndices.indices_idf[mot]
@@ -147,15 +146,20 @@ class StockeurIndicesTfIdf:
     def __init__(self, dossier):
         """Initialise le stockeur des indices TF-IDF."""
         # Fréquences brutes.
+        print("Calcul des occurences de chaque mot.")
+        debut = time.time()
         stockeur_frequences = StockeurFrequences(dossier)
-        corpus = stockeur_frequences.compte_total
+        print("Comptage terminé en %.3fs." % (time.time() - debut))
         # Indices TF-IDF
+        print("Calcul des indices TF-IDF.")
+        debut = time.time()
         self.indices = {}
-        for film, occ_film in stockeur_frequences.occurences:
+        for film, occ_film in stockeur_frequences.occurences.items():
             self.indices[film] = defaultdict(float)
             for mot in occ_film:
                 self.indices[film][mot] = CalculateurIndices.indice_tf_idf(
-                    mot, occ_film, corpus)
+                    mot, occ_film, stockeur_frequences.occurences)
+        print("Calcul des indices effectué en %.3fs." % (time.time() - debut))
 
     def get_indice(self, mot, film):
         """Renvoie l'indice TF-IDF d'un mot pour un film donné."""

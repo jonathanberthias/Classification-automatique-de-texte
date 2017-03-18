@@ -6,6 +6,8 @@ from tkinter.filedialog import askdirectory
 import analyse
 import traitement
 
+import random
+
 # Variables par défaut
 if os.path.exists(os.path.join("..", "imdb")):  # dossier parent du fichier
     PATH_TO_RESOURCES = os.path.join("..", "imdb")
@@ -21,7 +23,7 @@ PATH_TO_INDEX = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "title_index"))
 PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
 PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
 
-NOMBRE_COMMENTAIRES = 1000
+NOMBRE_COMMENTAIRES = 5000
 OVERWRITE = True
 
 
@@ -37,15 +39,9 @@ def main():
               (NOMBRE_COMMENTAIRES, duree))
     else:
         print("Traitement sauté.")
-    print("Comptage des mots.")
-    debut = time.time()
-    analyseur = analyse.StockeurFrequences(PATH_TO_FILMS)
-    stock = analyseur.compte_total()
-    duree = time.time() - debut
-    print("Opération effectuée en %.3fs." % duree)
-    # print(stock.most_common(50))
-    print(len(stock.keys()))
-
+    analyseur = analyse.StockeurIndicesTfIdf(PATH_TO_FILMS)
+    # film = random.choice(list(analyseur.indices.keys()))
+    # print(analyseur.indices[film])
 
 if __name__ == "__main__":
     main()
