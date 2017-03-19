@@ -7,8 +7,11 @@ fichier du film qui lui correspond.
 import os
 import re
 import shutil
+import sys
+import time
 
 import nltk
+from nltk.tokenize import word_tokenize
 
 
 class AssociateurCommentairesFilms:
@@ -155,9 +158,10 @@ class TraiteurCommentaires:
         ret = " ".join(lemmes)
         """
         # On lemmatise chaque mot et on garde que si il est pas trop fréquent.
-        to_keep = filter(
-            lambda x: x not in TraiteurCommentaires.mots_trop_frequents,
-            map(TraiteurCommentaires.lemmatiseur_func, clean_comment.split()))
+        to_keep = filter(lambda x: x not in
+                         TraiteurCommentaires.mots_trop_frequents, map(
+                             TraiteurCommentaires.lemmatiseur_func,
+                             clean_comment.split()))
         return " ".join(to_keep)
 
     @staticmethod
@@ -170,7 +174,10 @@ class EcriveurFichiersFilms:
     """Crée les fichiers des films."""
 
     def __init__(self, path_to_folder):
-        """Crée le dossier pour stocker les films."""
+        """Crée le dossier pour stocker les films.
+
+        Renvoie 1 si un nouveau fichier film a été crée, 0 sinon.
+        """
         self.chemin = path_to_folder
         if os.path.exists(self.chemin):
             # On importe que si besoin
@@ -185,9 +192,11 @@ class EcriveurFichiersFilms:
             with open(fichier, 'a', encoding='utf8') as film:
                 film.write("\n")
                 film.write(comment)
+            return 0
         else:
             with open(fichier, 'w', encoding='utf8') as film:
                 film.write(comment)
+            return 1
 
 
 class Traitement:
@@ -214,25 +223,32 @@ class Traitement:
         """Effectue l'ensemble du traitement pour tout les commentaires."""
         # Variables pour les fonctions pour gagner un peu de temps.
         print("Création du répertoire.")
+        debut = time.time()
+
         get_film_id = AssociateurCommentairesFilms(
             self.path_to_index).get_film
-        print("Répertoire créé.")
+        print("Répertoire créé en %.3fs." % (time.time() - debut))
         writer = EcriveurFichiersFilms(
             self.path_to_films).ecrire_commentaire
+
         traiter = TraiteurCommentaires.traiter_commentaire
         num_com = 0
-        print("Ecriture des fichiers pour les films.")
+        num_films = 0
+        print("Ecriture des fichiers film.")
+        debut = time.time()
         for com in os.listdir(self.path_to_comments):
             com_id = com[:com.find("_")]
             num_com += 1
-            # Indicateur de progression
             if num_com > nb_com:
                 break
-            # sys.stdout.write("\r%.1f%%" % (100 * num_com / nb_com))
-            full_path = os.path.join(self.path_to_comments, com)
-            with open(full_path, encoding='utf8') as comment:
+            # Indicateur de progression
+            sys.stdout.write("\r%.1f%%" % (100 * num_com / nb_com))
+
+            comment_path = os.path.join(self.path_to_comments, com)
+            with open(comment_path, encoding='utf8') as comment:
                 commentaire = comment.read()
                 commentaire = traiter(commentaire)
                 film_id = get_film_id(com_id)
-                writer(commentaire, film_id)
-        print("\nFichiers films crées.")
+                num_films += writer(commentaire, film_id)
+        print("\n%d commentaires traités et %d fichiers film créés en %.3fs." %
+              (nb_com, num_films, (time.time() - debut)))

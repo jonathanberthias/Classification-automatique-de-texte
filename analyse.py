@@ -3,7 +3,7 @@
 import math
 import os
 import time
-from collections import Counter
+from collections import Counter, defaultdict
 
 
 class Compteur:
@@ -91,10 +91,11 @@ class StockeurFrequences:
 class CalculateurIndices:
     """Calcule l'indice TF-IDF des mots."""
 
-    indices_idf = {}
+    def __init__(self):
+        """Initialise un dctionnaire pour stocker les indices IDF."""
+        self.indices_idf = {}
 
-    @staticmethod
-    def _indice_tf(mot, occurences_texte):
+    def _indice_tf(self, mot, occurences_texte):
         """Renvoie l'indice TF d'un mot dans un texte.
 
         Forme simple: fréquence brute.
@@ -109,34 +110,32 @@ class CalculateurIndices:
             print("%s pas apparu." % mot)
             raise key_err
 
-    @staticmethod
-    def _indice_idf(mot, occurences_corpus):
+    def _indice_idf(self, mot, occurences_corpus):
         """Calcule l'indice IDF d'un mot dans un corpus.
 
-        log base 10 du nombre de textes divisé par le nombre de textes où le mot
-        apparait.
+        log base 10 du nombre de textes divisé par le nombre de textes où le
+        mot apparait.
 
         :param mot: mot dont on cherche l'indice TDF.
         :param occurences_corpus: 'Counter' de tous les textes du corpus.
         """
-        if mot in CalculateurIndices.indices_idf:
-            return CalculateurIndices.indices_idf[mot]
+        if mot in self.indices_idf:
+            return self.indices_idf[mot]
         nb_textes = len(occurences_corpus)
         apparu = sum([mot in occ for occ in occurences_corpus.values()])
         idf = math.log10(nb_textes / apparu)
-        CalculateurIndices.indices_idf[mot] = idf
+        self.indices_idf[mot] = idf
         return idf
 
-    @staticmethod
-    def indice_tf_idf(mot, occurences_texte, occurences_corpus):
+    def indice_tf_idf(self, mot, occurences_texte, occurences_corpus):
         """Indice TF-IDF d'un mot d'un texte par rapport au corpus.
 
         :param mot: mot dont on cherche l'indice TF-IDF.
         :param occurences_texte: 'Counter' des mots du texte contenant le mot.
         :param occurences_corpus: 'Counter' des mots dans tout le corpus.
         """
-        ind_tf = CalculateurIndices._indice_tf(mot, occurences_texte)
-        ind_idf = CalculateurIndices._indice_idf(mot, occurences_corpus)
+        ind_tf = self._indice_tf(mot, occurences_texte)
+        ind_idf = self._indice_idf(mot, occurences_corpus)
         return ind_tf * ind_idf
 
 
@@ -152,14 +151,31 @@ class StockeurIndicesTfIdf:
         print("Comptage terminé en %.3fs." % (time.time() - debut))
         # Indices TF-IDF
         print("Calcul des indices TF-IDF.")
+        self.calculateur = CalculateurIndices()
         debut = time.time()
-        self.indices = {}
-        for film, occ_film in stockeur_freq.occurences.items():
-            self.indices[film] = {mot: CalculateurIndices.indice_tf_idf(
-                mot, occ_film, stockeur_freq.occurences) for mot in occ_film}
+        """ Dictionnaire de dictionnaires:
+        film -> dictionnaire: mot -> indice_tf_idf
+        """
+        self.indices = {film:
+                        {mot: self.calculateur.indice_tf_idf(
+                            mot, occ_film, stockeur_freq.occurences)
+                         for mot in occ_film}
+                        for film, occ_film in stockeur_freq.occurences.items()}
         print("Calcul des indices effectué en %.3fs." % (time.time() - debut))
 
-    def get_indice(self, mot, film):
+    def get_idf_mot(self, mot):
+        """Renvoie l'indice IDF d'un mot donné."""
+        try:
+            return self.calculateur.indices_idf[mot]
+        except KeyError as key_err:
+            print("%s n'a pas d'indice IDF." % mot)
+            raise key_err
+
+    def get_tous_idf(self):
+        """Renvoie le dictionnaire des indices IDF de tous les mots."""
+        return self.calculateur.indices_idf
+
+    def get_tf_idf(self, mot, film):
         """Renvoie l'indice TF-IDF d'un mot pour un film donné."""
         try:
             return self.indices[film][mot]
