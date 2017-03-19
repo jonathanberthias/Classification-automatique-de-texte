@@ -7,10 +7,8 @@ fichier du film qui lui correspond.
 import os
 import re
 import shutil
-import sys
 
 import nltk
-from nltk.tokenize import word_tokenize
 
 
 class AssociateurCommentairesFilms:
@@ -157,10 +155,9 @@ class TraiteurCommentaires:
         ret = " ".join(lemmes)
         """
         # On lemmatise chaque mot et on garde que si il est pas trop fréquent.
-        to_keep = filter(lambda x: x not in
-                         TraiteurCommentaires.mots_trop_frequents, map(
-                             TraiteurCommentaires.lemmatiseur_func,
-                             clean_comment.split()))
+        to_keep = filter(
+            lambda x: x not in TraiteurCommentaires.mots_trop_frequents,
+            map(TraiteurCommentaires.lemmatiseur_func, clean_comment.split()))
         return " ".join(to_keep)
 
     @staticmethod

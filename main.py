@@ -1,12 +1,11 @@
 """Module principal pour appeler chaque partie du programme."""
 import os
+import random
 import time
 from tkinter.filedialog import askdirectory
 
 import analyse
 import traitement
-
-import random
 
 # Variables par défaut
 if os.path.exists(os.path.join("..", "imdb")):  # dossier parent du fichier
@@ -40,8 +39,8 @@ def main():
     else:
         print("Traitement sauté.")
     analyseur = analyse.StockeurIndicesTfIdf(PATH_TO_FILMS)
-    # film = random.choice(list(analyseur.indices.keys()))
-    # print(analyseur.indices[film])
+    film = random.choice(list(analyseur.indices.keys()))
+    print(analyseur.indices[film])
 
 if __name__ == "__main__":
     main()

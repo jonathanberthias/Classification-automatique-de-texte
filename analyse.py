@@ -3,7 +3,7 @@
 import math
 import os
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 
 
 class Compteur:
