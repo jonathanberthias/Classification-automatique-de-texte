@@ -1,6 +1,5 @@
 """Module principal pour appeler chaque partie du programme."""
 import os
-import random
 import time
 from tkinter.filedialog import askdirectory
 
@@ -22,25 +21,49 @@ PATH_TO_INDEX = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "title_index"))
 PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
 PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
 
+# Nombre de commentaires à traiter
 NOMBRE_COMMENTAIRES = 5000
+# Si vrai, supprime et réécrit e dossier de films. Sinon, saute la partie 1.
 OVERWRITE = True
+
+
+def partie1():
+    """Appelle la partie 1, traitement."""
+    if OVERWRITE:
+        traiteur = traitement.Traitement(
+            PATH_TO_INDEX, PATH_TO_COMMENTS, PATH_TO_FILMS)
+        traiteur.traiter(NOMBRE_COMMENTAIRES)
+
+    else:
+        print("Traitement sauté.")
+
+
+def partie2():
+    """Appelle la parie 2, analyse."""
+    stock_indices = analyse.StockeurIndicesTfIdf(PATH_TO_FILMS)
+    return stock_indices
+
+
+def partie3():
+    """Appelle la partie 3, distance."""
+    pass
+
+
+def partie4():
+    """Appelle la partie 4, classification."""
+    pass
 
 
 def main():
     """Fonction principale."""
-    if OVERWRITE:
-        traiteur = traitement.Traitement(
-            PATH_TO_INDEX, PATH_TO_COMMENTS, PATH_TO_FILMS)
-        debut = time.time()
-        traiteur.traiter(NOMBRE_COMMENTAIRES)
-        duree = time.time() - debut
-        print("%d commentaires traités en %.3fs." %
-              (NOMBRE_COMMENTAIRES, duree))
-    else:
-        print("Traitement sauté.")
-    analyseur = analyse.StockeurIndicesTfIdf(PATH_TO_FILMS)
-    film = random.choice(list(analyseur.indices.keys()))
-    print(analyseur.indices[film])
+    debut = time.time()
+    partie1()
+    partie2()
+    partie3()
+    partie4()
+
+    print("Opération totale terminée en %.3fs." % (time.time() - debut))
+
 
 if __name__ == "__main__":
     main()
