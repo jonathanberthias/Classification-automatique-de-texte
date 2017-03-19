@@ -22,7 +22,7 @@ PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
 PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
 
 # Nombre de commentaires à traiter
-NOMBRE_COMMENTAIRES = 5000
+NOMBRE_COMMENTAIRES = 10000
 # Si vrai, supprime et réécrit e dossier de films. Sinon, saute la partie 1.
 OVERWRITE = True
 
@@ -41,6 +41,10 @@ def partie1():
 def partie2():
     """Appelle la parie 2, analyse."""
     stock_indices = analyse.StockeurIndicesTfIdf(PATH_TO_FILMS)
+    idf = stock_indices.get_tous_idf()
+    debut = time.time()
+    trie = sorted(idf, key=idf.get, reverse=True)
+    print("Tri effectué en %.3fs." % (time.time() - debut))
     return stock_indices
 
 
