@@ -1,3 +1,5 @@
+#!bin/bash
+# -*- coding: utf-8 -*-
 """Module principal pour appeler chaque partie du programme."""
 import os
 import time
@@ -5,6 +7,7 @@ from tkinter.filedialog import askdirectory
 
 import analyse
 import traitement
+
 
 # Variables par défaut
 if os.path.exists(os.path.join("..", "imdb")):  # dossier parent du fichier
@@ -15,16 +18,19 @@ else:  # autre part
     PATH_TO_RESOURCES = askdirectory(
         mustexist=True,
         title="Veuillez sélectionner votre dossier 'imdb'.")
-# Pour tests
-#   PATH_TO_RESOURCES = "../imdb_test"
+
 PATH_TO_INDEX = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "title_index"))
 PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
 PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
 
 # Nombre de commentaires à traiter
-NOMBRE_COMMENTAIRES = 10000
+NOMBRE_COMMENTAIRES = 100
+
 # Si vrai, supprime et réécrit e dossier de films. Sinon, saute la partie 1.
 OVERWRITE = True
+
+# Active l'indicateur de progression, marche mal sous Windows
+PROGRESS = False
 
 
 def partie1():
@@ -32,7 +38,7 @@ def partie1():
     if OVERWRITE:
         traiteur = traitement.Traitement(
             PATH_TO_INDEX, PATH_TO_COMMENTS, PATH_TO_FILMS)
-        traiteur.traiter(NOMBRE_COMMENTAIRES)
+        traiteur.traiter(NOMBRE_COMMENTAIRES, progress=PROGRESS)
 
     else:
         print("Traitement sauté.")
