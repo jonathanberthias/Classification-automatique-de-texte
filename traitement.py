@@ -219,7 +219,7 @@ class Traitement:
         print("Chemin vers les coms: %s" % self.path_to_comments)
         print("Chemin vers les films: %s" % self.path_to_films)
 
-    def traiter(self, nb_com=25000):
+    def traiter(self, nb_com=25000, progress=True):
         """Effectue l'ensemble du traitement pour tout les commentaires."""
         # Variables pour les fonctions pour gagner un peu de temps.
         print("Création du répertoire.")
