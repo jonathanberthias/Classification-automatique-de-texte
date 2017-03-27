@@ -1,1 +1,0 @@
-"""K-plus proches voisins."""
