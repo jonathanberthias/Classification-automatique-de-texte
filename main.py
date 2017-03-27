@@ -1,3 +1,5 @@
+#!bin/bash
+# -*- coding: utf-8 -*-
 """Module principal pour appeler chaque partie du programme."""
 import os
 import time
@@ -5,6 +7,9 @@ from tkinter.filedialog import askdirectory
 
 import analyse
 import traitement
+import distance
+import classification
+
 
 # Variables par défaut
 if os.path.exists(os.path.join("..", "imdb")):  # dossier parent du fichier
@@ -15,38 +20,65 @@ else:  # autre part
     PATH_TO_RESOURCES = askdirectory(
         mustexist=True,
         title="Veuillez sélectionner votre dossier 'imdb'.")
-# Pour tests
-#   PATH_TO_RESOURCES = "../imdb_test"
-PATH_TO_INDEX = os.path.join(PATH_TO_RESOURCES, "title_index")
-PATH_TO_COMMENTS = os.path.join(PATH_TO_RESOURCES, "comments")
-PATH_TO_FILMS = os.path.join(PATH_TO_RESOURCES, "films")
 
-NOMBRE_COMMENTAIRES = 5000
-OVERWRITE = False
+PATH_TO_INDEX = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "title_index"))
+PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
+PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
+
+# Nombre de commentaires à traiter
+NOMBRE_COMMENTAIRES = 200
+
+# Si vrai, supprime et réécrit e dossier de films. Sinon, saute la partie 1.
+OVERWRITE = True
+
+# Active l'indicateur de progression, marche mal sous Windows
+PROGRESS = False
+
+def afficher_dic(dico, associateur):
+    for centre, films in dico.items():
+        print("Groupe de centre %s" % associateur.get_titre(centre))
+        print(", ".join(films))
+
+
+def partie1():
+    """Appelle la partie 1, traitement."""
+    traiteur = traitement.Traitement(
+        PATH_TO_INDEX, PATH_TO_COMMENTS, PATH_TO_FILMS)
+    associateur = AssociateurCommentairesFilms(PATH_TO_INDEX)
+    if OVERWRITE:
+        traiteur.traiter(NOMBRE_COMMENTAIRES, progress=PROGRESS, associateur=associateur)
+    else:
+        print("Traitement sauté.")
+    return associateur
+
+
+def partie2():
+    """Appelle la parie 2, analyse."""
+    stock_indices = analyse.StockeurIndicesTfIdf(PATH_TO_FILMS)
+    return stock_indices
+
+
+def partie3(stockeur):
+    """Appelle la partie 3, distance."""
+    mots_perti = distance.pertinence_tfidf(100, stockeur)
+    return distance.get_dico_des_films(stockeur.get_stockeur_frequences(), mots_perti)
+
+
+def partie4(dico, associateur):
+    """Appelle la partie 4, classification."""
+    groupes = classification.kmeans(20, dico, associateur)
+    afficher_dic(groupes, associateur)
 
 
 def main():
     """Fonction principale."""
-    if OVERWRITE:
-        traiteur = traitement.Traitement(
-            PATH_TO_INDEX, PATH_TO_COMMENTS, PATH_TO_FILMS)
-        debut = time.time()
-        traiteur.traiter(NOMBRE_COMMENTAIRES)
-        duree = time.time() - debut
-        print("%d commentaires traités en %.3fs." %
-              (NOMBRE_COMMENTAIRES, duree))
-    else:
-        print("Traitement sauté.")
-    print("Comptage des mots.")
     debut = time.time()
-    analyseur = analyse.StockeurFrequences(PATH_TO_FILMS)
-    for film in os.listdir(PATH_TO_FILMS):
-        analyseur.ajouter_film(film)
-    stock = analyseur.compte_total()
-    duree = time.time() - debut
-    print("Opération effectuée en %.3fs." % duree)
-    # print(stock.most_common(50))
-    print(len(stock.keys()))
+    associateur = partie1()
+    stockeur = partie2()
+    dico = partie3(stockeur)
+    partie4(dico, associateur)
+
+    print("Opération totale terminée en %.3fs." % (time.time() - debut))
 
 
 if __name__ == "__main__":
