@@ -3,7 +3,7 @@
 import math
 import os
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 
 
 class Compteur:
@@ -160,7 +160,8 @@ class StockeurIndicesTfIdf:
                         {mot: self.calculateur.indice_tf_idf(
                             mot, occ_film, self.stockeur_freq.occurences)
                          for mot in occ_film}
-                        for film, occ_film in self.stockeur_freq.occurences.items()}
+                        for film, occ_film in
+                        self.stockeur_freq.occurences.items()}
         print("Calcul des indices effectué en %.3fs." % (time.time() - debut))
 
     def get_idf_mot(self, mot):
@@ -184,4 +185,5 @@ class StockeurIndicesTfIdf:
             return 0.
 
     def get_stockeur_frequences(self):
+        """Renvoie les stockeur de fréquences brutes."""
         return self.stockeur_freq
