@@ -1,1 +1,4 @@
+# Visual Studio Code Python files
 *.pyc
+config.py
+objectdb
