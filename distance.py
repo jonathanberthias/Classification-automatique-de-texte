@@ -17,7 +17,7 @@ def pertinence(num, stockeur):
 def pertinence_tfidf(num, stockeur):
     """Renvoie la liste des n mots les plus pertinents avec le TF-IDF.
 
-    :param n: nombre de mots à garder.
+    :param num: nombre de mots à garder.
     :param stockeur: objet StockeurIndicesTfIdf complet.
     """
     tf_idf = stockeur.indices

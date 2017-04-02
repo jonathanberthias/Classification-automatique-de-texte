@@ -11,7 +11,7 @@ import sys
 import time
 
 import nltk
-import codecs
+
 
 class AssociateurCommentairesFilms:
     """Lit le fichier d'index et stock le film associé à chaque commentaire."""
@@ -26,13 +26,13 @@ class AssociateurCommentairesFilms:
         if not os.path.exists(path_to_index):
             raise IOError("Pas d'index au chemin: %s" % path_to_index)
         print(path_to_index)
-        with codecs.open(path_to_index, 'r', encoding='utf-8') as index:
-                for ligne in index.readlines():
-                    vals = ligne.split(':')
-                    comment_id = vals[0]
-                    film_id = vals[1]
-                    titre = vals[2].strip()
-                    self.films[comment_id] = (film_id, titre)
+        with open(path_to_index, 'r', encoding='utf8') as index:
+            for ligne in index.readlines():
+                vals = ligne.split(':')
+                comment_id = vals[0]
+                film_id = vals[1]
+                titre = vals[2].strip()
+                self.films[comment_id] = (film_id, titre)
 
     def get_film(self, comment_id):
         """Retourne l'identifiant du film associé au commentaire donné."""
@@ -127,13 +127,13 @@ class TraiteurCommentaires:
     @staticmethod
     def traiter_commentaire(comment):
         """Renvoie le commentaire entièrement nettoyé."""
-        clean_comment = TraiteurCommentaires._enlever_newlines(comment)
+        clean_comment = TraiteurCommentaires._enlever_tags(comment)
         clean_comment = TraiteurCommentaires._enlever_ponctuation(
             clean_comment)
         return clean_comment
 
     @staticmethod
-    def _enlever_newlines(comment):
+    def _enlever_tags(comment):
         """Nettoie tout ce qui se situe entre des tags <>."""
         ouverture = comment.find("<")
         if ouverture < 0:
@@ -146,7 +146,7 @@ class TraiteurCommentaires:
         # 'find' trouve la première occurence du symbole, donc il ne devrait
         # pas y en avoir avant 'ouverture'
         debut = comment[:ouverture]
-        fin = TraiteurCommentaires._enlever_newlines(comment[fermeture + 1:])
+        fin = TraiteurCommentaires._enlever_tags(comment[fermeture + 1:])
         return debut + fin
 
     @staticmethod
