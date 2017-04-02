@@ -8,7 +8,7 @@ import distance
 def kmeans(k, dico_des_films, associateur):
     """Algorithme de k-means simple."""
     centres = random.sample(dico_des_films.keys(), k)
-    groupes = {c: [c] for c in centres}
+    groupes = {c: [associateur.get_titre(c)] for c in centres}
     for film in dico_des_films.keys():
         if film not in centres:
             dist = {}
