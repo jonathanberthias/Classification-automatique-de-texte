@@ -25,7 +25,10 @@ PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
 PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
 
 # Nombre de commentaires à traiter
-NOMBRE_COMMENTAIRES = 25000
+NOMBRE_COMMENTAIRES = 100
+
+# Nombre de groupes pour le k-means
+NB_GROUPES = 2
 
 # Si vrai, supprime et réécrit e dossier de films. Sinon, saute la partie 1.
 OVERWRITE = True
@@ -42,10 +45,7 @@ def afficher_dic(dico, associateur):
 
 def partie1():
     """Appelle la partie 1, traitement."""
-    print("Création du répertoire.")
-    debut = time.time()
     associateur = traitement.AssociateurCommentairesFilms(PATH_TO_INDEX)
-    print("Répertoire créé en %.3fs." % (time.time() - debut))
     if OVERWRITE:
         traiteur = traitement.Traitement(PATH_TO_COMMENTS, PATH_TO_FILMS)
         traiteur.traiter(NOMBRE_COMMENTAIRES,
@@ -70,7 +70,7 @@ def partie3(stockeur):
 
 def partie4(dico, associateur):
     """Appelle la partie 4, classification."""
-    groupes = classification.kmeans(20, dico, associateur)
+    groupes = classification.kmeans(NB_GROUPES, dico, associateur)
     afficher_dic(groupes, associateur)
 
 
@@ -83,7 +83,6 @@ def main():
     dico = partie3(stockeur)
     partie4(dico, associateur)
     print("Classification terminée en %.3fs." % (time.time() - deb))
-
     print("Opération totale terminée en %.3fs." % (time.time() - debut))
 
 
