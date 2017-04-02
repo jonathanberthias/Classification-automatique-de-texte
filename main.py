@@ -1,5 +1,3 @@
-#!bin/bash
-# -*- coding: utf-8 -*-
 """Module principal pour appeler chaque partie du programme."""
 import os
 import time
@@ -25,7 +23,7 @@ PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
 PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
 
 # Nombre de commentaires à traiter
-NOMBRE_COMMENTAIRES = 100
+NOMBRE_COMMENTAIRES = 500
 
 # Nombre de groupes pour le k-means
 NB_GROUPES = 2
@@ -34,10 +32,10 @@ NB_GROUPES = 2
 OVERWRITE = True
 
 # Active l'indicateur de progression, marche mal sous Windows
-PROGRESS = True
+PROGRESS = False
 
 
-def afficher_dic(dico, associateur):
+def _afficher_dic(dico, associateur):
     for centre, films in dico.items():
         print("Groupe de centre %s" % associateur.get_titre(centre))
         print(", ".join(films))
@@ -71,7 +69,7 @@ def partie3(stockeur):
 def partie4(dico, associateur):
     """Appelle la partie 4, classification."""
     groupes = classification.kmeans(NB_GROUPES, dico, associateur)
-    afficher_dic(groupes, associateur)
+    # _afficher_dic(groupes, associateur)
 
 
 def main():
