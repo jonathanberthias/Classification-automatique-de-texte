@@ -122,7 +122,8 @@ class CalculateurIndices:
         mot apparait.
 
         :param mot: mot dont on cherche l'indice TDF.
-        :param occurences_total: 'Counter' de tous les textes du corpus.
+        :param occurences_total: Dictionnaire des 'Counter' de tous les textes
+                                 du corpus.
         """
         if mot in self.indices_idf:
             return self.indices_idf[mot]
@@ -137,7 +138,8 @@ class CalculateurIndices:
 
         :param mot: mot dont on cherche l'indice TF-IDF.
         :param occurences_texte: 'Counter' des mots du texte contenant le mot.
-        :param occurences_corpus: 'Counter' des mots dans tout le corpus.
+        :param occurences_corpus: Dictionnaire des 'Counter' des mots dans tout
+                                  le corpus.
         """
         ind_tf = self._indice_tf(mot, occurences_texte)
         ind_idf = self._indice_idf(mot, occurences_total)
@@ -169,7 +171,7 @@ class StockeurIndicesTfIdf:
             self.indices[film] = {}
             for mot in occ_film.keys():
                 self.indices[film][mot] = self.calculateur.indice_tf_idf(
-                    mot, occ_film, self.stockeur_freq.compte_total)
+                    mot, occ_film, self.stockeur_freq.occurences)
         print("Calcul des indices effectué en %.3fs." % (time.time() - debut))
 
     def get_idf_mot(self, mot):
