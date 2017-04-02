@@ -19,34 +19,40 @@ class AssociateurCommentairesFilms:
     def __init__(self, path_to_index):
         """Crée le répertoire entre les comentaires et les films associés.
 
+        `comment_film` est un dictionnaire qui à chaque commentaire associe
+                       l'identifiant du film qui lui correspond.
+        `film_titre` est un dictionnaire qui à chaque identifiant de film
+                     associe son titre.
+
         :param path_to_index: chemin relatif de ce fichier au fichier
         d'index.
         """
-        self.films = {}
+        self.comment_film = {}
+        self.film_titre = {}
         if not os.path.exists(path_to_index):
             raise IOError("Pas d'index au chemin: %s" % path_to_index)
-        print(path_to_index)
+        print("Chemin vers l'index: %s" % path_to_index)
         with open(path_to_index, 'r', encoding='utf8') as index:
             for ligne in index.readlines():
                 vals = ligne.split(':')
                 comment_id = vals[0]
                 film_id = vals[1]
                 titre = vals[2].strip()
-                self.films[comment_id] = (film_id, titre)
+                self.comment_film[comment_id] = film_id
+                self.film_titre[film_id] = titre
 
     def get_film(self, comment_id):
         """Retourne l'identifiant du film associé au commentaire donné."""
-        if comment_id in self.films:
-            return self.films[comment_id][0]
+        if comment_id in self.comment_film:
+            return self.comment_film[comment_id][0]
         raise IndexError(
-            "Le commentaire %s n'est pas dans la base de commentaires." %
-            comment_id)
+            "Le commentaire %s n'est pas associé à un film." % comment_id)
 
     def get_titre(self, film_id):
         """Renvoie le titre du film correspondant."""
-        for (f_id, titre) in self.films.values():
-            if f_id == film_id:
-                return titre
+        if film_id in self.film_titre:
+            return self.film_titre[film_id]
+        raise IndexError("Le film %s n'a pas de titre." % film_id)
 
 
 LEMMATISEUR = nltk.stem.WordNetLemmatizer()
@@ -57,8 +63,7 @@ PATTERN = re.compile(r'[\W_]+')
 def traiter_commentaire(comment):
     """Renvoie le commentaire entièrement nettoyé."""
     clean_comment = _enlever_tags(comment)
-    clean_comment = _enlever_ponctuation(
-        clean_comment)
+    clean_comment = _enlever_ponctuation(clean_comment)
     clean_comment = _lemmatiser(clean_comment)
     return clean_comment
 
@@ -122,34 +127,22 @@ class EcriveurFichiersFilms:
 class Traitement:
     """Traite les commentaires et les range nettoyés dans le bon fichier."""
 
-    def __init__(self,
-                 path_to_index,
-                 path_to_comments,
-                 path_to_films):
+    def __init__(self, path_to_comments, path_to_films):
         """Initialise le traiteur.
 
-        :param path_to_index: chemin relatif vers le fichier index
-        :param path_to_comments: chemin relatif vers les commentaires
-        :param path_to_films: chemin relatif vers les films
+        :param path_to_comments: chemin vers les commentaires
+        :param path_to_films: chemin vers les films
         """
-        self.path_to_index = path_to_index
         self.path_to_comments = path_to_comments
         self.path_to_films = path_to_films
-        print("Chemin vers l'index: %s" % self.path_to_index)
-        print("Chemin vers les coms: %s" % self.path_to_comments)
+        print("Chemin vers les commentaires: %s" % self.path_to_comments)
         print("Chemin vers les films: %s" % self.path_to_films)
 
     def traiter(self, nb_com=25000, progress=True, associateur=None):
-        """Effectue l'ensemble du traitement pour tout les commentaires."""
+        """Effectue l'ensemble du traitement pour tous les commentaires."""
         # Variables pour les fonctions pour gagner un peu de temps.
-        print("Création du répertoire.")
-        debut = time.time()
-        get_film_id = associateur.get_film
-        print("Répertoire créé en %.3fs." % (time.time() - debut))
-        writer = EcriveurFichiersFilms(
-            self.path_to_films).ecrire_commentaire
+        writer = EcriveurFichiersFilms(self.path_to_films)
 
-        traiter = TraiteurCommentaires.traiter_commentaire
         num_com = 0
         num_films = 0
         print("Ecriture des fichiers film.")
@@ -166,9 +159,9 @@ class Traitement:
             comment_path = os.path.join(self.path_to_comments, com)
             with open(comment_path, encoding='utf8') as comment:
                 commentaire = comment.read()
-                commentaire = traiter(commentaire)
-                film_id = get_film_id(com_id)
-                num_films += writer(commentaire, film_id)
+                commentaire = traiter_commentaire(commentaire)
+                film_id = associateur.get_film(com_id)
+                num_films += writer.ecrire_commentaire(commentaire, film_id)
         print("\n%d commentaires traités et %d fichiers film créés en %.3fs." %
               (nb_com, num_films, (time.time() - debut)))
         return associateur
