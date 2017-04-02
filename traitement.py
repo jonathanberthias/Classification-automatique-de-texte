@@ -42,7 +42,7 @@ class AssociateurCommentairesFilms:
                 self.film_titre[film_id] = titre
 
     def get_film(self, comment_id):
-        """Retourne l'identifiant du film associé au commentaire donné."""
+        """Renvoie l'identifiant du film associé au commentaire donné."""
         if comment_id in self.comment_film:
             return self.comment_film[comment_id][0]
         raise IndexError(
