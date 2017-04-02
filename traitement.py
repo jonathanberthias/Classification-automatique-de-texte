@@ -44,7 +44,7 @@ class AssociateurCommentairesFilms:
     def get_film(self, comment_id):
         """Renvoie l'identifiant du film associé au commentaire donné."""
         if comment_id in self.comment_film:
-            return self.comment_film[comment_id][0]
+            return self.comment_film[comment_id]
         raise IndexError(
             "Le commentaire %s n'est pas associé à un film." % comment_id)
 
@@ -55,44 +55,45 @@ class AssociateurCommentairesFilms:
         raise IndexError("Le film %s n'a pas de titre." % film_id)
 
 
-LEMMATISEUR = nltk.stem.WordNetLemmatizer()
+class TraiteurCommentaire:
+    """Nettoie et lemmatise les commentaires."""
 
-PATTERN = re.compile(r'[\W_]+')
+    def __init__(self):
+        """Initialise le lemmatiseur et l'expression régulière."""
+        self.lemmatiseur = nltk.stem.WordNetLemmatizer()
+        # Ne garde que les caractères alphanumériques
+        self.pattern = re.compile(r'[\W_]+')
 
+    def traiter_commentaire(self, comment):
+        """Renvoie le commentaire entièrement nettoyé."""
+        clean_comment = self._enlever_tags(comment)
+        clean_comment = self._enlever_ponctuation(clean_comment)
+        clean_comment = self._lemmatiser(clean_comment.strip().split())
+        return clean_comment
 
-def traiter_commentaire(comment):
-    """Renvoie le commentaire entièrement nettoyé."""
-    clean_comment = _enlever_tags(comment)
-    clean_comment = _enlever_ponctuation(clean_comment)
-    clean_comment = _lemmatiser(clean_comment)
-    return clean_comment
+    def _enlever_tags(self, comment):
+        """Nettoie tout ce qui se situe entre des tags <>."""
+        ouverture = comment.find("<")
+        if ouverture < 0:
+            # Pas de tag
+            return comment
+        fermeture = comment.find(">")
+        if fermeture < 0:
+            # Probablement un smiley ou un truc du genre
+            return comment
+        # 'find' trouve la première occurence du symbole, donc il ne devrait
+        # pas y en avoir avant 'ouverture'
+        debut = comment[:ouverture]
+        fin = self._enlever_tags(comment[fermeture + 1:])
+        return debut + fin
 
+    def _enlever_ponctuation(self, comment):
+        """Nettoie la ponctuation."""
+        return self.pattern.sub(' ', comment.lower())
 
-def _enlever_tags(comment):
-    """Nettoie tout ce qui se situe entre des tags <>."""
-    ouverture = comment.find("<")
-    if ouverture < 0:
-        # Pas de tag
-        return comment
-    fermeture = comment.find(">")
-    if fermeture < 0:
-        # Probablement un smiley ou un truc du genre
-        return comment
-    # 'find' trouve la première occurence du symbole, donc il ne devrait
-    # pas y en avoir avant 'ouverture'
-    debut = comment[:ouverture]
-    fin = _enlever_tags(comment[fermeture + 1:])
-    return debut + fin
-
-
-def _enlever_ponctuation(comment):
-    """Nettoie la ponctuation."""
-    return PATTERN.sub(' ', comment.lower())
-
-
-def _lemmatiser(mots):
-    """Lemmatise une liste de mots."""
-    return " ".join([LEMMATISEUR.lemmatize(mot) for mot in mots])
+    def _lemmatiser(self, mots):
+        """Lemmatise une liste de mots."""
+        return " ".join([self.lemmatiseur.lemmatize(mot) for mot in mots])
 
 
 class EcriveurFichiersFilms:
@@ -141,6 +142,7 @@ class Traitement:
     def traiter(self, nb_com=25000, progress=True, associateur=None):
         """Effectue l'ensemble du traitement pour tous les commentaires."""
         # Variables pour les fonctions pour gagner un peu de temps.
+        traiteur = TraiteurCommentaire()
         writer = EcriveurFichiersFilms(self.path_to_films)
 
         num_com = 0
@@ -159,7 +161,7 @@ class Traitement:
             comment_path = os.path.join(self.path_to_comments, com)
             with open(comment_path, encoding='utf8') as comment:
                 commentaire = comment.read()
-                commentaire = traiter_commentaire(commentaire)
+                commentaire = traiteur.traiter_commentaire(commentaire)
                 film_id = associateur.get_film(com_id)
                 num_films += writer.ecrire_commentaire(commentaire, film_id)
         print("\n%d commentaires traités et %d fichiers film créés en %.3fs." %
