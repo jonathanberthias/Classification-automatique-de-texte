@@ -43,137 +43,51 @@ class AssociateurCommentairesFilms:
             comment_id)
 
     def get_titre(self, film_id):
+        """Renvoie le titre du film correspondant."""
         for (f_id, titre) in self.films.values():
             if f_id == film_id:
                 return titre
 
 
-class TraiteurCommentaires:
-    """Lemmatise et enlève la ponctuation des commentaires."""
+LEMMATISEUR = nltk.stem.WordNetLemmatizer()
 
-    a_garder = ["VB", "VBP", "NN", "JJ", "NNP", "ADJ", "NUM", "NOUN", "VERB"]
+PATTERN = re.compile(r'[\W_]+')
 
-    # frozenset pour accès rapide rapide à une liste immuable
-    # liste des mots inutiles les pus fréquents
-    mots_trop_frequents = frozenset([
-        'thi', 'movy', 'hav', 'ar', 'al', 'act', 'lik', 'ev', 'ther', 'tim',
-        'mak', 'som', 'mor', 'charact', 'story', 'wer', 'wel', 'com', 'oth',
-        'scen', 'bad', 'lov', 'wil', 'gre', 'peopl', 'direct', 'mad', 'becaus',
-        'think', 'tak', 'giv', 'aft', 'plot', 'ov', 'lif', 'nev', 'littl',
-        'best', 'wher', 'bet', 'doe', 'stil', 'yo', 'fin', 'writ', 'perform',
-        'sery', 'thes', 'kil', 'whil', 'old', 'someth', 'rol', 'car',
-        'interest', 'tru', 'star', 'thos', 'wom', 'cast', 'though', 'liv',
-        'sam', 'funny', 'mus', 'anoth', 'bef', 'noth', 'try', '10', 'view',
-        'start', 'believ', 'young', 'produc', 'hum', 'girl', 'again', 'origin',
-        'long', 'turn', 'hor', 'lat', 'quit', 'lin', 'friend', 'minut',
-        'comedy', 'pretty', 'wond', 'hap', 'sur', 'high', 'effect', 'howev',
-        'hard', 'laugh', 'bas', 'fan', 'person', 'famy', 'ear', 'nee', 'tel',
-        'beauty', 'becom', 'alway', 'class', 'mom', 'kid', 'sint', 'whol',
-        'complet', 'mean', 'cre', 'plac', 'lead', 'script', 'expect', 'diff',
-        'shot', 'book', 'mat', 'anyth', 'nam', 'prob', 'begin', 'cal', 'tal',
-        '2', 'entertain', 'fun', 'run', 'sex', 'sens', 'tv', 'mov', 'art',
-        'hop', 'rath', 'worst', 'anyon', 'audy', 'bor', 'poor', 'episod', 'rat',
-        'war', 'spec', 'rel', 'op', 'appear', 'dialog', 'miss', 'keep',
-        'surpr', 'espec', 'cours', 'second', 'anim', 'fac', 'nat', 'wor',
-        'goe', 'perfect', 'vert', 'gen', 'money', 'mind', 'someon', 'problem',
-        'nic', 'dvd', 'mayb', 'tri', 'ont', 'hous', 'typ', 'everyth', 'night',
-        'aw', 'three', 'follow', 'boy', 'ful', 'recommend', 'suppos', 'ag',
-        'leav', 'hand', 'excel', 'wast', 'togeth', 'dur', 'hom', 'dram',
-        'obvy', 'sound', 'everyon', 'certain', 'john', 'fath', 'top', 'ad',
-        '1', 'ey', 'decid', 'cut', 'fight', 'less', 'fal', 'review', 'terr',
-        'hour', 'talk', 'ment', 'left', 'wif', 'black', 'understand', 'murd',
-        'dead', 'head', 'includ', 'styl', 'rememb', 'chang', 'entir', 'els',
-        'ide', 'pleas', 'sev', 'hist', 'stat', 'pow', 'clos', 'releas', 'pict',
-        'rom', 'piec', 'involv', 'feat', 'tot', 'budget', 'non', 'pres',
-        'poss', 'sav', 'attempt', 'hollywood', 'cinem', 'disappoint',
-        'stupid', 'song', 'dea', 'sad', 'portray', 'expery', '3', 'coupl',
-        'eith', 'video', 'definit', 'absolv', 'exceiv', 'abl', 'cop', 'cas',
-        'easy', 'success', 'consid', 'lack', 'word', 'particul', 'child',
-        'sci', 'amaz', 'fail', 'titl', 'until', 'camer', 'mess', 'along',
-        'form', 'dark', 'loc', 'smal', 'hat', 'clear', 'emot', 'jok', 'dant',
-        'adv', 'sort', 'viol', 'bring', 'next', 'cam', 'heart', 'light',
-        'broth', 'gam', 'won', 'perhap', 'slow', 'near', 'flick', 'develop',
-        'school', 'par', 'qual', 'pass', 'walk', 'moth', 'oft', 'vis', 'sequ',
-        'sil', 'doing', 'meet', 'hil', 'imagin', 'ye', 'actress', 'bril',
-        'sid', 'ex', 'horr', 'whit', 'unfortun', 'guess', 'el', 'itself',
-        'sit', 'lost', 'exampl', 'stop', 'hero', 'forc', 'son', 'numb',
-        'felt', 'impress', 'quest', 'childr', 'support', 'hit', 'ask',
-        'couldn', 'rent', 'extrem', 'pol', 'wors', 'voic', 'und', 'against',
-        'stand', 'evil', 'went', 'min', 'oh', 'somewh', 'mr', 'wait',
-        'overal', 'list', 'favorit', 'mystery', 'un', 'edit', 'past',
-        'already', '5', 'learn', 'spoil', '4', 'michael', 'marry', 'genr',
-        'despit', 'deal', 'throughout', 'win', 'town', 'del', 'driv',
-        'happy', 'dec', 'mem', 'teen', 'self', 'daught', 'mil', 'wish',
-        'twist', 'credit', 'cult', 'annoy', 'soon', 'sing', 'touch', 'b',
-        'city', 'today', 'sometim', 'simpl', 'behind', 'god', 'bil',
-        'deserv', 'tre', 'bar', 'stay', 'zomby', 'pac', 'chant', 'blood',
-        'novel', 'crit', 'plan', 'stuff', 'docu', 'comp', 'anyway', 'app',
-        'import', 'ord', 'fil', 'body', 'gav', 'myself', 'hel', 'incred',
-        'etc', 'level', 'fig', 'scor', 'er', 'exact', 'dream', 'maj', 'situ',
-        'speak', 'die', 'themselv', 'capt', 'los', 'return', 'pet', 'hold',
-        'room', 'shoot', 'ridic', 'group', 'lady', 'thank', 'tend',
-        'cinematograph', 'acc', 'jam', 'break', 'pain', 'cont', 'fem',
-        'heard', 'pick', 'rec', 'convint', 'robert', 'rock', 'husband',
-        'valu', 'polit', 'took', 'simil', 'cannot', 'strong', 'predict',
-        'fair', 'four', 'country', 'continu', 'known', 'hug', 'shock', 'im',
-        'gor', 'cent', 'mot', 'season', 'fam', 'alon', 'told', 'opin',
-        'wouldn', 'crap', 'hear', 'ten', 'result', 'caus'
-    ])
 
-    lemmatiseur_func = nltk.stem.LancasterStemmer().stem
+def traiter_commentaire(comment):
+    """Renvoie le commentaire entièrement nettoyé."""
+    clean_comment = _enlever_tags(comment)
+    clean_comment = _enlever_ponctuation(
+        clean_comment)
+    clean_comment = _lemmatiser(clean_comment)
+    return clean_comment
 
-    pattern = re.compile(r'[\W_]+')
 
-    @staticmethod
-    def traiter_commentaire(comment):
-        """Renvoie le commentaire entièrement nettoyé."""
-        clean_comment = TraiteurCommentaires._enlever_tags(comment)
-        clean_comment = TraiteurCommentaires._enlever_ponctuation(
-            clean_comment)
-        return clean_comment
+def _enlever_tags(comment):
+    """Nettoie tout ce qui se situe entre des tags <>."""
+    ouverture = comment.find("<")
+    if ouverture < 0:
+        # Pas de tag
+        return comment
+    fermeture = comment.find(">")
+    if fermeture < 0:
+        # Probablement un smiley ou un truc du genre
+        return comment
+    # 'find' trouve la première occurence du symbole, donc il ne devrait
+    # pas y en avoir avant 'ouverture'
+    debut = comment[:ouverture]
+    fin = _enlever_tags(comment[fermeture + 1:])
+    return debut + fin
 
-    @staticmethod
-    def _enlever_tags(comment):
-        """Nettoie tout ce qui se situe entre des tags <>."""
-        ouverture = comment.find("<")
-        if ouverture < 0:
-            # Pas de tag
-            return comment
-        fermeture = comment.find(">")
-        if fermeture < 0:
-            # Probablement un smiley ou un truc du genre
-            return comment
-        # 'find' trouve la première occurence du symbole, donc il ne devrait
-        # pas y en avoir avant 'ouverture'
-        debut = comment[:ouverture]
-        fin = TraiteurCommentaires._enlever_tags(comment[fermeture + 1:])
-        return debut + fin
 
-    @staticmethod
-    def _enlever_ponctuation(comment):
-        """Nettoie la ponctuation."""
-        # Ne garde que les lettres et les chiffres
-        clean_comment = TraiteurCommentaires.pattern.sub(' ', comment.lower())
-        """ Classification grammaticale de chaque mot.
-        tokenized = word_tokenize(clean_comment)
-        tokens = nltk.pos_tag(tokenized)
-        to_keep = (x[0] for x in tokens if x[1]
-                   in TraiteurCommentaires.a_garder and x[0] not in
-                   TraiteurCommentaires.mots_a_enlever)
-        lemmes = (TraiteurCommentaires._lemmatiser(x) for x in to_keep)
-        ret = " ".join(lemmes)
-        """
-        # On lemmatise chaque mot et on garde que si il est pas trop fréquent.
-        to_keep = filter(lambda x: x not in
-                         TraiteurCommentaires.mots_trop_frequents, map(
-                             TraiteurCommentaires.lemmatiseur_func,
-                             clean_comment.split()))
-        return " ".join(to_keep)
+def _enlever_ponctuation(comment):
+    """Nettoie la ponctuation."""
+    return PATTERN.sub(' ', comment.lower())
 
-    @staticmethod
-    def _lemmatiser(mot):
-        """Lemmatise un mot."""
-        return TraiteurCommentaires.lemmatiseur_func(mot)
+
+def _lemmatiser(mots):
+    """Lemmatise une liste de mots."""
+    return " ".join([LEMMATISEUR.lemmatize(mot) for mot in mots])
 
 
 class EcriveurFichiersFilms:
