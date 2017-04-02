@@ -42,10 +42,12 @@ def afficher_dic(dico, associateur):
 
 def partie1():
     """Appelle la partie 1, traitement."""
-    traiteur = traitement.Traitement(
-        PATH_TO_INDEX, PATH_TO_COMMENTS, PATH_TO_FILMS)
+    print("Création du répertoire.")
+    debut = time.time()
     associateur = traitement.AssociateurCommentairesFilms(PATH_TO_INDEX)
+    print("Répertoire créé en %.3fs." % (time.time() - debut))
     if OVERWRITE:
+        traiteur = traitement.Traitement(PATH_TO_COMMENTS, PATH_TO_FILMS)
         traiteur.traiter(NOMBRE_COMMENTAIRES,
                          progress=PROGRESS, associateur=associateur)
     else:
