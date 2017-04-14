@@ -23,7 +23,7 @@ PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
 PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
 
 # Nombre de commentaires à traiter
-NOMBRE_COMMENTAIRES = 500
+NOMBRE_COMMENTAIRES = 20
 
 # Nombre de groupes pour le k-means
 NB_GROUPES = 2
@@ -43,6 +43,7 @@ def _afficher_dic(dico, associateur):
 
 def partie1():
     """Appelle la partie 1, traitement."""
+    traiteur = traitement.Traitement(PATH_TO_COMMENTS, PATH_TO_FILMS)
     associateur = traitement.AssociateurCommentairesFilms(PATH_TO_INDEX)
     if OVERWRITE:
         traiteur = traitement.Traitement(PATH_TO_COMMENTS, PATH_TO_FILMS)
@@ -61,15 +62,17 @@ def partie2():
 
 def partie3(stockeur):
     """Appelle la partie 3, distance."""
-    mots_perti = distance.pertinence_tfidf(10000, stockeur)
-    return distance.get_dico_des_films(stockeur.get_stockeur_frequences(),
-                                       mots_perti)
+    mots_perti = distance.pertinence(100, stockeur)
+    return distance.get_dico_des_films(stockeur.get_stockeur_frequences(), mots_perti), mots_perti
 
 
-def partie4(dico, associateur):
+def partie4(dico, mots_perti):
     """Appelle la partie 4, classification."""
-    groupes = classification.kmeans(NB_GROUPES, dico, associateur)
+    # centres = classification.generer_centres(2, dico)
+    # print(centres)
+    # groupes = classification.kmeans(NB_GROUPES, dico, associateur)
     # _afficher_dic(groupes, associateur)
+    classification.resultats_k_means(NB_GROUPES, dico, mots_perti, 5)
 
 
 def main():
@@ -78,8 +81,8 @@ def main():
     associateur = partie1()
     stockeur = partie2()
     deb = time.time()
-    dico = partie3(stockeur)
-    partie4(dico, associateur)
+    dico, mots_perti = partie3(stockeur)
+    partie4(dico, mots_perti)
     print("Classification terminée en %.3fs." % (time.time() - deb))
     print("Opération totale terminée en %.3fs." % (time.time() - debut))
 
