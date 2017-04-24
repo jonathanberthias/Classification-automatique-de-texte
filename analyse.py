@@ -105,7 +105,7 @@ class CalculateurIndices:
             return int(mot in occurences_texte)
         elif mode == 'simple':
             # `Counter` renvoie 0 si le mot n'est pas dans le dictionnaire.
-            return occurences_texte[mot]
+            return occurences_texte[mot] / len(occurences_texte.keys())
         elif mode == 'log':
             try:
                 return 1 + math.log(occurences_texte[mot])
