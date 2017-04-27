@@ -45,30 +45,36 @@ def get_mots_film(id_film, dossier):
 class StockeurFrequences:
     """Conserve pour chaque film son compte de mots."""
 
-    def __init__(self, dossier):
+    def __init__(self):
         """Initialise le stockeur.
 
-        :param dossier: dossier contenant les commentaires de films.
         :occurences: dictionnaire qui associe à un film l'objet
         collections.Counter de ses commentaires.
         occurences: film_id -> dictionnaire: mot -> occurences dans le texte
+        :nb_apparitions_uniques: compte le nombre de films dans lesquels chaque
+                                 mot apparaît
         :total: stocke le compte parmi tous les textes ensembles
         """
         self.occurences = {}
         self.total = Counter()
-        self._ajouter_films(dossier)
+        self.nb_apparitions_uniques = Counter()
+        self.nb_films = 0
 
-    def _ajouter_films(self, dossier):
+    def compter_tous_films(self, dossier):
         """Ajoute un film et son compte de mots dans la base.
 
-        Erreur si le film a déjà été compté.
+        :param dossier: dossier où chercher les fichiers des films.
         """
         for film_id in os.listdir(dossier):
             mots = get_mots_film(film_id, dossier)
             compte = compter_occurences(mots)
+
             self.occurences[film_id] = compte
+            for mot in compte.keys():
+                self.nb_apparitions_uniques[mot] += 1
             # update ajoute le compte au total (sans créer de nouveau Counter)
             self.total.update(compte)
+            self.nb_films += 1
 
     def get_compte_film(self, film_id):
         """Renvoie l'objet Counter associé à un film."""
@@ -76,9 +82,25 @@ class StockeurFrequences:
             return self.occurences[film_id]
         raise ValueError("Film %s pas compté." % film_id)
 
-    def compte_total(self):
+    def get_compte_total(self):
         """Renvoie les occurences dans la totalité des textes du dossier."""
         return self.total
+
+    def get_nb_films_apparu(self, mot):
+        """Renvoie le nombre de films où un mot est apparu."""
+        return self.nb_apparitions_uniques[mot]
+
+    def get_occurences_mot_dans_film(self, film, mot):
+        """Renvoie le nombre d'apapritions d'un mot dans un film."""
+        return self.get_compte_film(film).get(mot, 0)
+
+    def get_nb_films_total(self):
+        """Renvoie le nombre de films traités."""
+        return self.nb_films
+
+    def get_apparitions_uniques(self):
+        """Renvoie le nombre de films où apparait chaque mot."""
+        return self.nb_apparitions_uniques
 
 
 class CalculateurIndices:
@@ -88,34 +110,18 @@ class CalculateurIndices:
         """Initialise un dctionnaire pour stocker les indices IDF."""
         self.indices_idf = {}
 
-    def _indice_tf(self, mot, occurences_texte, mode="simple"):
+    def indice_tf(self, mot, occurences_texte):
         """Renvoie l'indice TF d'un mot dans un texte.
 
-        Forme simple: fréquence brute.
+        Forme simple: fréquence relative.
 
         :param mot: mot dont on cherche la fréquence.
         :param occurences_texte: 'Counter' des occurences de chaque mot du
                                  texte.
-        :param mode: 'simple', 'log' ou 'binaire'
-                     'simple': fréquence brute
-                     'log': 1 + log(fréquence brute)
-                     'binaire': 1 si le mot apparait
         """
-        if mode == 'binaire':
-            return int(mot in occurences_texte)
-        elif mode == 'simple':
-            # `Counter` renvoie 0 si le mot n'est pas dans le dictionnaire.
-            return occurences_texte[mot] / len(occurences_texte.keys())
-        elif mode == 'log':
-            try:
-                return 1 + math.log(occurences_texte[mot])
-            except ValueError:
-                # Le mot n'apparait pas, erreur avec le log.
-                return 0
-        else:
-            raise ValueError("Mode %s inconnu." % mode)
+        return math.log(occurences_texte[mot]) / len(occurences_texte.keys())
 
-    def _indice_idf(self, mot, occurences_total):
+    def indice_idf(self, mot, apparitions_uniques, nb_films):
         """Calcule l'indice IDF d'un mot dans un corpus.
 
         log base 10 du nombre de textes divisé par le nombre de textes où le
@@ -127,13 +133,12 @@ class CalculateurIndices:
         """
         if mot in self.indices_idf:
             return self.indices_idf[mot]
-        nb_textes = len(occurences_total)
-        apparu = sum([mot in occ for occ in occurences_total.values()])
-        idf = math.log10(nb_textes / apparu)
+        apparu = apparitions_uniques[mot]
+        idf = math.log10(nb_films / apparu)
         self.indices_idf[mot] = idf
         return idf
 
-    def indice_tf_idf(self, mot, occurences_texte, occurences_total):
+    def indice_tfidf(self, mot, film, stockeur_frequences):
         """Indice TF-IDF d'un mot d'un texte par rapport au corpus.
 
         :param mot: mot dont on cherche l'indice TF-IDF.
@@ -141,44 +146,53 @@ class CalculateurIndices:
         :param occurences_corpus: Dictionnaire des 'Counter' des mots dans tout
                                   le corpus.
         """
-        ind_tf = self._indice_tf(mot, occurences_texte)
-        ind_idf = self._indice_idf(mot, occurences_total)
+        ind_tf = self.indice_tf(
+            mot, stockeur_frequences.get_compte_film(film))
+        ind_idf = self.indice_idf(mot,
+                                  stockeur_frequences.get_apparitions_uniques(),
+                                  stockeur_frequences.get_nb_films_total())
         return ind_tf * ind_idf
 
 
 class StockeurIndicesTfIdf:
     """Pour chaque film, enregistre l'indice TF-IDF de chaque mot."""
 
-    def __init__(self, dossier):
+    def __init__(self, dossier, occ_min):
         """Initialise le stockeur des indices TF-IDF.
 
         Par défaut, calcule tous les indices TF-IDF des mots.
+
+        :param dossier: dossier contenant les fichiers des films.
+        :param occ_min: nombre minimal de films où doit apparaitre un mot pour
+                        etre pris en compte dans le k-means.
         """
-        # Fréquences brutes.
-        print("Calcul des occurences de chaque mot.")
-        debut = time.time()
-        self.stockeur_freq = StockeurFrequences(dossier)
-        print("Comptage terminé en %.3fs." % (time.time() - debut))
-        # Indices TF-IDF
-        print("Calcul des indices IDF.")
+        self.stockeur_freq = StockeurFrequences()
         self.calculateur = CalculateurIndices()
-        debut = time.time()
-        """ Dictionnaire de dictionnaires:
+        """ Indices_tf_idf est un dictionnaire de dictionnaires:
         film -> dictionnaire: mot -> indice_tf_idf
+        ou matrice[film][mot]
         """
-        self.indices = {}
+        self.indices_tf_idf = {}
+        self.seuil = occ_min
+        self.indices_tf_idf_filtres = {}
+
+        print("Compte des occurences de chaque mot.")
+        debut = time.time()
+        self.stockeur_freq.compter_tous_films(dossier)
+        print("Comptage terminé en %.3fs." % (time.time() - debut))
+
+        print("Calcul des indices TF-IDF")
+        debut = time.time()
         for film, occ_film in self.stockeur_freq.occurences.items():
-            self.indices[film] = {}
+            self.indices_tf_idf[film] = {}
             for mot in occ_film.keys():
-                self.indices[film][mot] = self.calculateur.indice_tf_idf(
-                    mot, occ_film, self.stockeur_freq.occurences)
+                self.indices_tf_idf[film][mot] = self.calculateur.indice_tfidf(
+                    mot, film, self.stockeur_freq)
         print("Calcul des indices effectué en %.3fs." % (time.time() - debut))
 
     def get_idf_mot(self, mot):
         """Renvoie l'indice IDF d'un mot donné."""
-        if mot in self.calculateur.indices_idf:
-            return self.calculateur.indices_idf[mot]
-        raise KeyError("%s n'a pas d'indice IDF." % mot)
+        return self.calculateur.indices_idf.get(mot, 0)
 
     def get_tous_idf(self):
         """Renvoie le dictionnaire des indices IDF de tous les mots."""
@@ -186,11 +200,36 @@ class StockeurIndicesTfIdf:
 
     def get_tf_idf(self, mot, film):
         """Renvoie l'indice TF-IDF d'un mot pour un film donné."""
-        if film in self.indices and mot in self.indices[film]:
-            return self.indices[film][mot]
-        # Le mot n'est pas dans le film.
-        return 0
+        return self.indices_tf_idf[film].get(mot, 0)
+
+    def get_tf_idf_film(self, film):
+        """Renvoie le dictionnaire des indices TF-IDF du film."""
+        return self.indices_tf_idf[film]
+
+    def get_max_tf_idf(self, mot):
+        """Renvoie le max des indices TF-IDF d'un mot pour tous les films."""
+        liste_des_films = self.stockeur_freq.occurences.keys()
+        return max([self.get_tf_idf(mot, film) for film in liste_des_films])
 
     def get_stockeur_frequences(self):
         """Renvoie le stockeur de fréquences brutes."""
         return self.stockeur_freq
+
+    def get_compte_frequences_film(self, film):
+        """Renvoie le compte des fréquences des mots du film."""
+        return self.stockeur_freq.get_compte_film(film)
+
+    def est_assez_frequent(self, mot):
+        """Renvoie vrai si le mot apparait dans au moins `seuil` films."""
+        return self.get_stockeur_frequences().get_nb_films_apparu(mot) >=\
+            self.seuil
+
+    def get_indices_tfidf_mots_filtres(self, film, liste_mots):
+        """Renvoie le dictionnaire pour les mots donnés et le film donné."""
+        if film in self.indices_tf_idf_filtres:
+            return self.indices_tf_idf_filtres.get(film)
+        mots_finaux = filter(lambda x: x in liste_mots,
+                             self.get_compte_frequences_film(film).keys())
+        dico = {x: self.get_tf_idf(x, film) for x in mots_finaux}
+        self.indices_tf_idf_filtres[film] = dico
+        return dico
