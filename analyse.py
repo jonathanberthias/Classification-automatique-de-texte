@@ -154,10 +154,22 @@ class CalculateurIndices:
         return ind_tf * ind_idf
 
 
+def filtrer_dictionnaire_mots(mots_pertinents, dictionnaire):
+    """Renvoie un compteur avec seulement les mots pertinents.
+
+    :param mots_pertinents: liste des mots à garder
+    :param dictionnaire: dictionnaire associé aux mots d'un film
+    """
+    # cles_a_garder = filter(lambda x: x in mots_pertinents,
+    # dictionnaire.keys())
+    return {x: dictionnaire[x] for x in dictionnaire.keys()
+            if x in mots_pertinents}
+
+
 class StockeurIndicesTfIdf:
     """Pour chaque film, enregistre l'indice TF-IDF de chaque mot."""
 
-    def __init__(self, dossier, occ_min):
+    def __init__(self, dossier, prop_min, prop_max):
         """Initialise le stockeur des indices TF-IDF.
 
         Par défaut, calcule tous les indices TF-IDF des mots.
@@ -173,13 +185,18 @@ class StockeurIndicesTfIdf:
         ou matrice[film][mot]
         """
         self.indices_tf_idf = {}
-        self.seuil = occ_min
         self.indices_tf_idf_filtres = {}
 
         print("Compte des occurences de chaque mot.")
         debut = time.time()
         self.stockeur_freq.compter_tous_films(dossier)
         print("Comptage terminé en %.3fs." % (time.time() - debut))
+
+        print("%d films" % self.stockeur_freq.get_nb_films_total())
+        self.occ_min = int(prop_min * self.stockeur_freq.get_nb_films_total())
+        self.occ_max = int(prop_max * self.stockeur_freq.get_nb_films_total())
+        print("Occurences minimum: %d\tOccurences maximum: %d" %
+              (self.occ_min, self.occ_max))
 
         print("Calcul des indices TF-IDF")
         debut = time.time()
@@ -221,15 +238,23 @@ class StockeurIndicesTfIdf:
 
     def est_assez_frequent(self, mot):
         """Renvoie vrai si le mot apparait dans au moins `seuil` films."""
-        return self.get_stockeur_frequences().get_nb_films_apparu(mot) >=\
-            self.seuil
+        apparitions = self.get_stockeur_frequences().get_nb_films_apparu(mot)
+        trop_peu = apparitions <= self.occ_min
+        trop_bcp = self.occ_max < apparitions
+        if trop_bcp:
+            print("%s" % mot, end=", ")
+        return not(trop_peu or trop_bcp)
 
     def get_indices_tfidf_mots_filtres(self, film, liste_mots):
         """Renvoie le dictionnaire pour les mots donnés et le film donné."""
         if film in self.indices_tf_idf_filtres:
             return self.indices_tf_idf_filtres.get(film)
+        dico = filtrer_dictionnaire_mots(
+            liste_mots, self.get_tf_idf_film(film))
+        """
         mots_finaux = filter(lambda x: x in liste_mots,
                              self.get_compte_frequences_film(film).keys())
         dico = {x: self.get_tf_idf(x, film) for x in mots_finaux}
+        """
         self.indices_tf_idf_filtres[film] = dico
         return dico
