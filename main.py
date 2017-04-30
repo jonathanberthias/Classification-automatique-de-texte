@@ -1,4 +1,5 @@
 """Module principal pour appeler chaque partie du programme."""
+
 import os
 import time
 from tkinter.filedialog import askdirectory
@@ -7,6 +8,7 @@ import analyse
 import classification
 import distance
 import traitement
+import voisins
 
 
 """
@@ -15,21 +17,22 @@ PARAMETRES
 
 # Si vrai, supprimer et réécrire le dossier de films. Sinon, sauter la partie 1
 # Nécessaire la première fois que le programme tourne et à chaque fois
-# qu'on augmente le nombre de commentaires.
-OVERWRITE = True
+# qu'on change le nombre de commentaires.
+OVERWRITE = False
 
 # Nombre de commentaires à traiter (25000 pour tous)
-NOMBRE_COMMENTAIRES = 1000
+NOMBRE_COMMENTAIRES = 25000
 
 # Nombre de groupes pour le k-means
-NB_GROUPES = 5
+NB_GROUPES = 7
 
 # Nombre de mots pertinents à utiliser pour la classification
 NB_MOTS = 1000
 
-# Nombre de films différents dans lesquels un film doit apparaitre pour
+# Proportion de films différents dans lesquels un film doit apparaitre pour
 # être pris en compte dans la sélection des mots pertinents
-OCCURENCES_MINIMUM = 20
+PROPORTION_MINIMUM = 0.01
+PROPORTION_MAXIMUM = 0.5
 
 # Si vrai, utiliser l'indice TF-IDF pour déterminer la pertinence d'un mot
 # (max pour l'ensemble des textes). Sinon, utiliser l'indice IDF.
@@ -40,7 +43,19 @@ TFIDF = True
 COSINUS = True
 
 # Active l'indicateur de progression, marche mal sous Windows
-PROGRESS = False
+PROGRESS = True
+
+"""BONUS"""
+
+# Nombre de voisins les plus proches à prendre en compte.
+NB_VOISINS = 5
+
+# Nombre de films dont on connait la note pour la comparer aux autres films.
+NB_REFERENTS = 1000
+
+# Différence maximale entre la vrai note et la note estimée pour que
+# l'estimation soit jugée correcte. La note est entre 1 et 10.
+TOLERENCE = 2
 
 
 """
@@ -59,6 +74,7 @@ else:  # autre part
 PATH_TO_INDEX = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "title_index"))
 PATH_TO_COMMENTS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "comments"))
 PATH_TO_FILMS = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "films"))
+PATH_TO_MOYENNES = os.path.abspath(os.path.join(PATH_TO_RESOURCES, "moyennes"))
 
 
 """
@@ -78,35 +94,54 @@ def _afficher_groupes(groupes, centres):
 
 def partie1():
     """Appelle la partie 1, traitement."""
-    traiteur = traitement.Traitement(PATH_TO_COMMENTS, PATH_TO_FILMS)
     associateur = traitement.AssociateurCommentairesFilms(PATH_TO_INDEX)
+    traiteur = traitement.Traitement(PATH_TO_COMMENTS,
+                                     PATH_TO_FILMS,
+                                     PATH_TO_MOYENNES)
     if OVERWRITE:
-        traiteur = traitement.Traitement(PATH_TO_COMMENTS, PATH_TO_FILMS)
-        traiteur.traiter(NOMBRE_COMMENTAIRES,
-                         progress=PROGRESS, associateur=associateur)
+        traiteur.traiter(nb_com=NOMBRE_COMMENTAIRES,
+                         progress=PROGRESS,
+                         associateur=associateur)
     else:
         print("Traitement sauté.")
 
 
 def partie2():
     """Appelle la parie 2, analyse."""
-    stock_indices = analyse.StockeurIndicesTfIdf(
-        PATH_TO_FILMS, OCCURENCES_MINIMUM)
+    stock_indices = analyse.StockeurIndicesTfIdf(dossier=PATH_TO_FILMS,
+                                                 prop_min=PROPORTION_MINIMUM,
+                                                 prop_max=PROPORTION_MAXIMUM)
     return stock_indices
 
 
 def partie3(stockeur):
     """Appelle la partie 3, distance."""
-    mots_perti = distance.plus_pertinents(
-        NB_MOTS, stockeur.get_tous_idf().keys(), stockeur, TFIDF)
+    mots_perti = distance.plus_pertinents(num_mots=NB_MOTS,
+                                          mots=stockeur.get_tous_idf().keys(),
+                                          stockeur_indices=stockeur,
+                                          utiliser_tfidf=TFIDF)
     return mots_perti
 
 
 def partie4(mots_perti, stockeur):
     """Appelle la partie 4, classification."""
-    return classification.kmeans(
-        NB_GROUPES, stockeur.indices_tf_idf.keys(),
-        mots_perti, COSINUS, stockeur)
+    return classification.kmeans(nb_groupes=NB_GROUPES,
+                                 liste_films=stockeur.indices_tf_idf.keys(),
+                                 mots_pertinents=mots_perti,
+                                 distance_cosinus=COSINUS,
+                                 stockeur_indices=stockeur)
+
+
+def bonus(stockeur_indices, mots_perti):
+    print("BONUS")
+    deb = time.time()
+    liste_films = stockeur_indices.get_stockeur_frequences().occurences.keys()
+    vrai, corr = voisins.devine_toutes_notes(
+        PATH_TO_MOYENNES, NB_VOISINS, NB_REFERENTS, TOLERENCE,
+        liste_films, mots_perti, stockeur_indices)
+    print("Bonus effectué en %.3fs" % (time.time() - deb))
+    print("Correct (total): %.2f%%" % (100 * vrai))
+    print("Correct (corrigé): %.2f%%" % (100 * corr))
 
 
 def main():
@@ -120,6 +155,7 @@ def main():
     _afficher_groupes(groupes, centres)
     print("Classification terminée en %.3fs." % (time.time() - deb))
     print("Opération totale terminée en %.3fs." % (time.time() - debut))
+    bonus(stockeur, mots_perti)
 
 
 if __name__ == "__main__":
