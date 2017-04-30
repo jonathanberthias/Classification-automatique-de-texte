@@ -2,7 +2,6 @@
 
 import math
 import random
-from collections import Counter
 
 import distance
 
@@ -19,25 +18,21 @@ def dictionnaire_moyen(liste_films, mots_pertinents, stockeur_indices):
     if nb_films == 0:
         # Aucun film dans la liste
         return {}
-    dico_total = Counter()  # {mot: 0.0 for mot in mots_pertinents}
-
+    dico_total = {}
     for id_film in liste_films:
-        for mot, indice in stockeur_indices.get_tf_idf_film(id_film).items():
-            dico_total[mot] += indice
-    """
-    for mot in mots_pertinents:
-        moyenne = 0
-        for id_film in liste_films:
-            moyenne += stockeur_indices.get_tf_idf(mot, id_film)
-        moyenne /= len(liste_films)
-        dico_moyen[mot] = moyenne
-    """
+        dico_filtre = stockeur_indices.get_indices_tfidf_mots_filtres(
+            id_film, mots_pertinents)
+        for mot, indice in dico_filtre.items():
+            dico_total[mot] = dico_total.get(mot, 0.0) + indice
     return {x: y / nb_films for x, y in dico_total.items()}
 
 
-def generer_centres(nb_groupes, liste_films, mots_pertinents, stockeur_indices):
+def generer_centres(num_gps, liste_films, mots_pertinents, stockeur_indices):
     """Renvoie la liste des dictionnaires des centres."""
-    films_aleatoires = random.sample(liste_films, nb_groupes)
+    if num_gps > len(liste_films):
+        raise ValueError("Impossible de former %d groupes avec %d films." %
+                         (num_gps, len(liste_films)))
+    films_aleatoires = random.sample(liste_films, num_gps)
     centres = [stockeur_indices.get_indices_tfidf_mots_filtres(
         a, mots_pertinents) for a in films_aleatoires]
     return centres
@@ -69,8 +64,8 @@ def kmeans(nb_groupes, liste_films, mots_pertinents,
     """Effectue le kmeans."""
     films_a_classer = filtrer_films_non_vides(
         liste_films, mots_pertinents, stockeur_indices)
-    print("""Traitement de %d films sur %d au total, soit %.2f%%
-          (les autres ne contiennent pas de mot pertinent)"""
+    print("""\nTraitement de %d films sur %d au total, soit %.f%%\
+    (les autres ne contiennent pas de mot pertinent)"""
           % (len(films_a_classer), len(liste_films),
              100 * len(films_a_classer) / len(liste_films)))
 
@@ -82,6 +77,7 @@ def kmeans(nb_groupes, liste_films, mots_pertinents,
     old_total_ss = math.inf
     tours = 0
     while total_ss < old_total_ss:
+        print(".", end="")
         if total_ss != -1:
             old_total_ss = total_ss
             for index_groupe, liste_films_groupe in enumerate(groupes):
