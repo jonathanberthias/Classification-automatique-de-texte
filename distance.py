@@ -20,36 +20,45 @@ def plus_pertinents(num_mots, mots, stockeur_indices, utiliser_tfidf):
         func = stockeur_indices.get_max_tf_idf
     else:
         func = stockeur_indices.get_idf_mot
-    trie = sorted(filtrer_frequence_minimale(
-        mots, stockeur_indices), key=func, reverse=True)
-    return set(trie[:num_mots])
+    mots_a_considerer = filtrer_frequence_minimale(mots, stockeur_indices)
+    trie = sorted(mots_a_considerer, key=func, reverse=True)
+    final = set(trie[:num_mots])
+    return final
 
 
-def filtrer_dictionnaire_mots(mots_pertinents, dictionnaire):
-    """Renvoie un compteur avec seulement les mots pertinents.
+class StockeurDistances:
+    """Classe pour stocker la distance entre vecteurs."""
 
-    :param mots_pertinents: liste des mots à garder
-    :param dictionnaire: dictionnaire associé aux mots d'un film
-    """
-    cles_a_garder = filter(lambda x: x in mots_pertinents, dictionnaire.keys())
-    return {x: dictionnaire[x] for x in cles_a_garder}
+    distances = {}
 
 
-def distance_dictionnaires(prm, sec, cosinus=True):
+def distance_dictionnaires(prm, sec, cosinus=True,
+                           prm_idx="", sec_idx=""):
     """Mesure la distance cosinus entre 2 dictionnaires.
 
     Inverse de la similarité cosinus.
-    :params: dictionnaires {mot: valeur}
-    :cosinus: si vrai, distance cosinus, sinon distance euclidienne (au carré)
+    :param prm/sec: dictionnaires {mot: valeur}
+    :params idx: identifiant des films pour mémoisation
+    :cosinus: si vrai, distance cosinus, sinon distance euclidienne
+                (au carré)
     """
+    if prm_idx > sec_idx:
+        prm_idx, sec_idx = sec_idx, prm_idx
+    if (prm_idx, sec_idx) in StockeurDistances.distances.keys():
+        return StockeurDistances.distances[(prm_idx, sec_idx)]
+
     if cosinus:
         num = sum([prm[i] * sec[i] for i in set(prm).intersection(set(sec))])
         norme_prm = sum((x * x for x in prm.values()))
         norme_sec = sum((x * x for x in sec.values()))
         denom = math.sqrt(norme_prm * norme_sec)
         if denom != 0:
-            return 1 - num / denom
-        return 1
+            dist = 1 - num / denom
+        else:
+            dist = 1
     else:
-        return sum([(prm.get(i, 0) - sec.get(i, 0))**2
+        dist = sum([(prm.get(i, 0) - sec.get(i, 0))**2
                     for i in set(prm).union(set(sec))])
+    if prm_idx and sec_idx:
+        StockeurDistances.distances[(prm_idx, sec_idx)] = dist
+    return dist
