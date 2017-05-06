@@ -18,7 +18,7 @@ PARAMETRES
 # Si vrai, supprimer et réécrire le dossier de films. Sinon, sauter la partie 1
 # Nécessaire la première fois que le programme tourne et à chaque fois
 # qu'on change le nombre de commentaires.
-OVERWRITE = False
+OVERWRITE = True
 
 # Nombre de commentaires à traiter (25000 pour tous)
 NOMBRE_COMMENTAIRES = 25000
@@ -31,7 +31,7 @@ NB_MOTS = 1000
 
 # Proportion de films différents dans lesquels un film doit apparaitre pour
 # être pris en compte dans la sélection des mots pertinents
-PROPORTION_MINIMUM = 0.01
+PROPORTION_MINIMUM = 0.05
 PROPORTION_MAXIMUM = 0.5
 
 # Si vrai, utiliser l'indice TF-IDF pour déterminer la pertinence d'un mot
@@ -50,12 +50,13 @@ PROGRESS = True
 # Nombre de voisins les plus proches à prendre en compte.
 NB_VOISINS = 5
 
-# Nombre de films dont on connait la note pour la comparer aux autres films.
+# Nombre de films dont on connait la note pour la comparer aux autres films
+# 3456 films au total si on prend en compte les 25000 commentaires.
 NB_REFERENTS = 1000
 
 # Différence maximale entre la vrai note et la note estimée pour que
 # l'estimation soit jugée correcte. La note est entre 1 et 10.
-TOLERENCE = 2
+TOLERENCE = 1.5
 
 
 """
@@ -104,6 +105,7 @@ def partie1():
                          associateur=associateur)
     else:
         print("Traitement sauté.")
+    return associateur
 
 
 def partie2():
@@ -132,13 +134,13 @@ def partie4(mots_perti, stockeur):
                                  stockeur_indices=stockeur)
 
 
-def bonus(stockeur_indices, mots_perti):
+def bonus(stockeur_indices, mots_perti, asso):
     print("BONUS")
     deb = time.time()
     liste_films = stockeur_indices.get_stockeur_frequences().occurences.keys()
     vrai, corr = voisins.devine_toutes_notes(
         PATH_TO_MOYENNES, NB_VOISINS, NB_REFERENTS, TOLERENCE,
-        liste_films, mots_perti, stockeur_indices)
+        liste_films, mots_perti, stockeur_indices, asso)
     print("Bonus effectué en %.3fs" % (time.time() - deb))
     print("Correct (total): %.2f%%" % (100 * vrai))
     print("Correct (corrigé): %.2f%%" % (100 * corr))
@@ -147,7 +149,7 @@ def bonus(stockeur_indices, mots_perti):
 def main():
     """Fonction principale."""
     debut = time.time()
-    partie1()
+    asso = partie1()
     stockeur = partie2()
     deb = time.time()
     mots_perti = partie3(stockeur)
@@ -155,7 +157,7 @@ def main():
     _afficher_groupes(groupes, centres)
     print("Classification terminée en %.3fs." % (time.time() - deb))
     print("Opération totale terminée en %.3fs." % (time.time() - debut))
-    bonus(stockeur, mots_perti)
+    bonus(stockeur, mots_perti, asso)
 
 
 if __name__ == "__main__":
