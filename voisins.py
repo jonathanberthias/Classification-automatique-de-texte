@@ -1,6 +1,5 @@
 """Inférence de la note d'un film grâce à ses voisins les plus proches."""
 
-import math
 import random
 
 import distance
@@ -14,20 +13,21 @@ def recuperer_moyennes(path_to_moyennes):
     moyennes = {}
     with open(path_to_moyennes, 'r') as fichier:
         for ligne in fichier.readlines():
-            sep = ligne.find(':')
-            film = ligne[:sep]
-            note = float(ligne[sep + 1:-2])
+            sep = ligne.strip().split(':')
+            film = sep[0]
+            note = float(sep[1])
             moyennes[film] = note
     return moyennes
 
 
 def referents(nb_ref, liste_films):
+    """Renvoie une liste de films choisis au hasard."""
     return random.sample(liste_films, nb_ref)
 
 
 def plus_proches(film_id, nb_proches, references,
                  mots_pertinents, stockeur_indices):
-    """Trouve les plus prohes voisins d'un film."""
+    """Trouve les plus proches voisins d'un film."""
     distances = {}
     dict_film = stockeur_indices.get_indices_tfidf_mots_filtres(
         film_id, mots_pertinents)
@@ -42,9 +42,12 @@ def plus_proches(film_id, nb_proches, references,
 
 def devine_note(film_id, nb_proches, references, mots_pertinents,
                 moyennes, stockeur_indices):
+    """Essaye de deviner la note d'un film à partir de ses voisins.
+
+    Coefficiente les voisins par leur distance.
+    """
     plus_pres = plus_proches(film_id, nb_proches, references,
                              mots_pertinents, stockeur_indices)
-    # Coefficientage
     dist_totale = 0
     score = 0
     for film, dist in plus_pres.items():
@@ -57,7 +60,8 @@ def devine_note(film_id, nb_proches, references, mots_pertinents,
 
 
 def devine_toutes_notes(path_to_moyennes, nb_proches, nb_ref, tolerence,
-                        liste_films, mots_pertinents, stockeur_indices):
+                        liste_films, mots_pertinents, stockeur_indices, asso):
+    """Essaye de prédire la note de tous les films."""
     moyennes = recuperer_moyennes(path_to_moyennes)
     references = referents(nb_ref, liste_films)
     unaccountables = 0
@@ -71,6 +75,9 @@ def devine_toutes_notes(path_to_moyennes, nb_proches, nb_ref, tolerence,
                 continue
             vraie = moyennes[film]
             difference = abs(guess - vraie)
+            if correct < 10:
+                print("%-50s\tPrediction: %.2f\tVraie: %.2f\tDiff: %.2f" %
+                      (asso.get_titre(film), guess, vraie, difference))
             if difference <= tolerence:
                 correct += 1
     vrai_taux = correct / (len(liste_films) - nb_ref)
