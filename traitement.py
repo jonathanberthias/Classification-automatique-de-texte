@@ -9,8 +9,10 @@ import re
 import shutil
 import sys
 import time
+import string
 
-import nltk
+from nltk.corpus import wordnet
+from nltk.stem import WordNetLemmatizer
 
 
 class AssociateurCommentairesFilms:
@@ -61,16 +63,41 @@ class TraiteurCommentaire:
 
     def __init__(self):
         """Initialise le lemmatiseur et l'expression régulière."""
-        self.lemmatiseur = nltk.stem.WordNetLemmatizer()
+        self.lemmatiseur = WordNetLemmatizer()
         # Ne garde que les caractères alphanumériques
         self.pattern = re.compile(r'[\W_]+')
+        self.majuscules = string.ascii_uppercase
+        self.caracteres_arret = string.punctuation + string.whitespace
 
     def traiter_commentaire(self, comment):
         """Renvoie le commentaire entièrement nettoyé."""
-        clean_comment = self._enlever_tags(comment)
+        clean_comment = self._enlever_noms_propres(comment)
+        clean_comment = self._enlever_tags(clean_comment)
         clean_comment = self._enlever_ponctuation(clean_comment)
         clean_comment = self._lemmatiser(clean_comment.strip().split())
         return clean_comment
+
+    def _enlever_noms_propres(self, comment):
+        point = True
+        new_com = []
+        i = 0
+        while i < len(comment):
+            if comment[i] == '.':
+                point = True
+                new_com.append(comment[i])
+            elif not point and comment[i] in self.majuscules:
+                # Majuscule mais pas de point avant
+                while i + 1 < len(comment) and comment[i + 1]\
+                        not in self.caracteres_arret:
+                    # on avance jusqu'au prochain espace ou point
+                    i += 1
+            elif comment[i] == " ":
+                new_com.append(comment[i])
+            else:
+                point = False
+                new_com.append(comment[i])
+            i += 1
+        return "".join(new_com)
 
     def _enlever_tags(self, comment):
         """Nettoie tout ce qui se situe entre des tags <>."""
@@ -94,7 +121,8 @@ class TraiteurCommentaire:
 
     def _lemmatiser(self, mots):
         """Lemmatise une liste de mots."""
-        return " ".join([self.lemmatiseur.lemmatize(mot) for mot in mots])
+        return " ".join([self.lemmatiseur.lemmatize(mot, wordnet.ADJ)
+                         for mot in mots])
 
 
 class EcriveurFichiersFilms:
@@ -163,10 +191,6 @@ class Traitement:
         print("Ecriture des fichiers film.")
         debut = time.time()
         for com in os.listdir(self.path_to_comments):
-            sep = com.find("_")
-            com_id = com[:sep]
-            # Note entre 1 et 10
-            note = com[sep + 1:com.find('.')]
             num_com += 1
             if num_com > nb_com:
                 break
@@ -174,9 +198,14 @@ class Traitement:
             if progress:
                 sys.stdout.write("\r%.1f%%" % (100 * num_com / nb_com))
 
+            sep = com.find("_")
+            com_id = com[:sep]
+            # Note entre 1 et 10
+            note = com[sep + 1:com.find('.')]
+
             comment_path = os.path.join(self.path_to_comments, com)
             with open(comment_path, encoding='utf8') as comment:
-                commentaire = comment.read()
+                commentaire = comment.read().strip()
                 commentaire = traiteur.traiter_commentaire(commentaire)
                 film_id = associateur.get_film(com_id)
                 num_films += writer.ecrire_commentaire(commentaire, film_id)
