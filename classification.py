@@ -40,7 +40,10 @@ def generer_centres(num_gps, liste_films, mots_pertinents, stockeur_indices):
 
 def classification(films_a_classer, liste_centres, mots_pertinents,
                    distance_cosinus, stockeur_indices):
-    """Renvoie une matrice de la composition de chaque groupe."""
+    """Renvoie une matrice de la composition de chaque groupe et les résidus.
+
+    total_ss = somme de carrés des distances entre les films et leur centre.
+    """
     groupes = [[] for _ in range(len(liste_centres))]
     total_ss = 0
     for film_id in films_a_classer:
@@ -64,7 +67,7 @@ def kmeans(nb_groupes, liste_films, mots_pertinents,
     """Effectue le kmeans."""
     films_a_classer = filtrer_films_non_vides(
         liste_films, mots_pertinents, stockeur_indices)
-    print("""\nTraitement de %d films sur %d au total, soit %.f%%\
+    print("""\nTraitement de %d films sur %d au total, soit %.2f%%\
     (les autres ne contiennent pas de mot pertinent)"""
           % (len(films_a_classer), len(liste_films),
              100 * len(films_a_classer) / len(liste_films)))
@@ -76,8 +79,10 @@ def kmeans(nb_groupes, liste_films, mots_pertinents,
     total_ss = -1
     old_total_ss = math.inf
     tours = 0
-    while total_ss < old_total_ss:
-        print(".", end="")
+    change = math.inf
+    # On continue tant que la SSR diminue de plus de 0.01% par étape
+    changement_min = 0.0001
+    while change > changement_min:
         if total_ss != -1:
             old_total_ss = total_ss
             for index_groupe, liste_films_groupe in enumerate(groupes):
@@ -87,5 +92,6 @@ def kmeans(nb_groupes, liste_films, mots_pertinents,
             films_a_classer, centres, mots_pertinents,
             distance_cosinus, stockeur_indices)
         tours += 1
-    print("%d boucles" % tours)
+        change = 1 - total_ss / old_total_ss
+        print("Boucle %d:\tSSR=%.2f\t%.2f%%" % (tours, total_ss, 100 * change))
     return groupes, centres
