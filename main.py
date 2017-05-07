@@ -29,7 +29,7 @@ NB_GROUPES = 7
 # Nombre de mots pertinents à utiliser pour la classification
 NB_MOTS = 1000
 
-# Proportion de films différents dans lesquels un film doit apparaitre pour
+# Proportion de films différents dans lesquels un mot doit apparaitre pour
 # être pris en compte dans la sélection des mots pertinents
 PROPORTION_MINIMUM = 0.05
 PROPORTION_MAXIMUM = 0.5
