@@ -76,7 +76,7 @@ def kmeans(nb_groupes, liste_films, mots_pertinents,
         nb_groupes, films_a_classer, mots_pertinents, stockeur_indices)
     groupes = classification(films_a_classer, centres, mots_pertinents,
                              distance_cosinus, stockeur_indices)
-    total_ss = -1
+    total_ss = -1.0
     old_total_ss = math.inf
     tours = 0
     change = math.inf

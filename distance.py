@@ -52,12 +52,12 @@ def distance_dictionnaires(prm, sec, cosinus=True,
         norme_prm = sum((x * x for x in prm.values()))
         norme_sec = sum((x * x for x in sec.values()))
         denom = math.sqrt(norme_prm * norme_sec)
-        if denom != 0:
-            dist = 1 - num / denom
+        if denom != 0.0:
+            dist = 1.0 - num / denom
         else:
-            dist = 1
+            dist = 1.0
     else:
-        dist = sum([(prm.get(i, 0) - sec.get(i, 0))**2
+        dist = sum([(prm.get(i, 0.0) - sec.get(i, 0.0))**2
                     for i in set(prm).union(set(sec))])
     if prm_idx and sec_idx:
         StockeurDistances.distances[(prm_idx, sec_idx)] = dist
