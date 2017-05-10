@@ -1,5 +1,6 @@
 """Inférence de la note d'un film grâce à ses voisins les plus proches."""
 
+import math
 import random
 
 import distance
@@ -55,7 +56,7 @@ def devine_note(film_id, nb_proches, references, mots_pertinents,
         score += (1 - dist) * moy_film
         dist_totale += 1 - dist
     if dist_totale == 0:
-        return -50
+        return -1
     return score / dist_totale
 
 
@@ -66,6 +67,7 @@ def devine_toutes_notes(path_to_moyennes, nb_proches, nb_ref, tolerence,
     references = referents(nb_ref, liste_films)
     unaccountables = 0
     correct = 0
+    diff_totale = 0.0
     for film in liste_films:
         if film not in references:
             guess = devine_note(film, nb_proches, references,
@@ -75,6 +77,7 @@ def devine_toutes_notes(path_to_moyennes, nb_proches, nb_ref, tolerence,
                 continue
             vraie = moyennes[film]
             difference = abs(guess - vraie)
+            diff_totale += difference ** 2
             if correct < 10:
                 print("%-50s\tPrediction: %.2f\tVraie: %.2f\tDiff: %.2f" %
                       (asso.get_titre(film), guess, vraie, difference))
@@ -82,4 +85,5 @@ def devine_toutes_notes(path_to_moyennes, nb_proches, nb_ref, tolerence,
                 correct += 1
     vrai_taux = correct / (len(liste_films) - nb_ref)
     taux_corrige = correct / (len(liste_films) - nb_ref - unaccountables)
-    return vrai_taux, taux_corrige
+    diff_moyenne = math.sqrt(diff_totale / (len(liste_films) - nb_ref))
+    return vrai_taux, taux_corrige, diff_moyenne
